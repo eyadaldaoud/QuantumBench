@@ -34,35 +34,35 @@ interface CameraPreset {
 
 const CAMERA_PRESETS: CameraPreset[] = [
   {
-    name: "Perspective 3/4",
+    name: "Perspective",
     id: "cinematic",
     position: new THREE.Vector3(-4.4, 2.2, 5.2),
     target: new THREE.Vector3(0.1, 0.0, 0),
     description: "Cinematic 45° optical bench view: full apparatus with clear slit separation",
   },
   {
-    name: "Flight Path",
+    name: "Beam Axis",
     id: "barrel",
     position: new THREE.Vector3(-6.8, 1.25, 0.0),
     target: new THREE.Vector3(1.2, 0.15, 0.0),
     description: "Look down the beam barrel through both slits directly to the detector",
   },
   {
-    name: "Detector Screen",
+    name: "Detector",
     id: "detector",
     position: new THREE.Vector3(2.4, 0.35, 2.4),
     target: new THREE.Vector3(5.18, 0.1, 0),
     description: "Close-up perpendicular view of the phosphor screen and fringes",
   },
   {
-    name: "Slits Close-Up",
+    name: "Slits Stage",
     id: "slits",
     position: new THREE.Vector3(-1.8, 0.65, 1.8),
     target: new THREE.Vector3(-0.5, 0.15, 0),
     description: "Close-up of the dual aperture slits, micrometer stage, and which-path detector",
   },
   {
-    name: "Overhead Bench",
+    name: "Overhead",
     id: "overhead",
     position: new THREE.Vector3(0.0, 9.2, 0.01),
     target: new THREE.Vector3(0.0, 0.0, 0),
@@ -825,9 +825,16 @@ function DoubleSlitScene({
       }
 
       const launchInterval = (1000 / currentRate) / currentSpeed;
-      if (currentRunning && time >= nextLaunchTime) {
-        firePhoton(time);
-        nextLaunchTime = time + launchInterval;
+      if (currentRunning) {
+        let spawned = 0;
+        while (time >= nextLaunchTime && spawned < 5) {
+          firePhoton(time);
+          nextLaunchTime += launchInterval;
+          spawned++;
+        }
+        if (time >= nextLaunchTime) {
+          nextLaunchTime = time + launchInterval;
+        }
       }
 
       for (let i = activePhotons.length - 1; i >= 0; i--) {
@@ -984,16 +991,6 @@ function DoubleSlitScene({
   return (
     <div className="scene-container">
       <div ref={mountRef} className="three-viewport" />
-      <div className="apparatus-overlay">
-        <div className="status-chip apparatus-chip">
-          <span className="chip-indicator active" />
-          OPTICAL BENCH · 14.3m RAILS
-        </div>
-        <div className={`status-chip observer-chip ${whichPath ? "engaged" : "superposition"}`}>
-          <span className="chip-indicator" />
-          {whichPath ? "OBSERVER: 2 PARTICLE BANDS" : "UNOBSERVED: 5+ WAVE FRINGES"}
-        </div>
-      </div>
     </div>
   );
 }
@@ -1045,15 +1042,17 @@ function LiveDistributionPlot({
 
   const color = wavelengthToColor(wavelength);
 
+  const calculatedSpacing = (0.924 * (wavelength / 532)).toFixed(2);
+
   return (
     <div className="analytics-card-wide">
       <div className="analytics-header">
         <div>
-          <span className="section-kicker">REAL-TIME ACCUMULATION</span>
-          <h3 className="analytics-title">Detector Probability Density Function</h3>
+          <span className="section-kicker">MODULE 01 // DETECTOR DIAGNOSTICS</span>
+          <h3 className="analytics-title">Phosphor Screen Intensity &amp; Density Function P(z)</h3>
         </div>
-        <span className="analytics-tag" style={{ color: color.hex, borderColor: color.hex }}>
-          {whichPath ? "TWO SEPARATE BANDS (OBSERVER ACTIVE)" : "5-FRINGE WAVE INTERFERENCE (NO OBSERVER)"}
+        <span className="analytics-tag" style={{ color: color.hex, borderColor: `${color.hex}55`, backgroundColor: `${color.hex}14` }}>
+          {whichPath ? "DECOHERENCE COLLAPSE (2 CLASSICAL BANDS)" : "WAVE SUPERPOSITION (5+ INTERFERENCE FRINGES)"}
         </span>
       </div>
 
@@ -1061,7 +1060,7 @@ function LiveDistributionPlot({
         <svg viewBox="0 0 440 135" preserveAspectRatio="none" className="distribution-svg">
           <defs>
             <linearGradient id="plotGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color.hex} stopOpacity="0.5" />
+              <stop offset="0%" stopColor={color.hex} stopOpacity="0.45" />
               <stop offset="100%" stopColor={color.hex} stopOpacity="0.0" />
             </linearGradient>
           </defs>
@@ -1069,7 +1068,7 @@ function LiveDistributionPlot({
           <line x1="0" y1="120" x2="440" y2="120" stroke="#1d2e3e" strokeWidth="1" strokeDasharray="3 3" />
           <line x1="220" y1="10" x2="220" y2="120" stroke="#1d2e3e" strokeWidth="1" strokeDasharray="2 4" />
 
-          {/* Slit center markers at z = -0.55m and z = +0.55m */}
+          {/* Slit center projection markers at z = -0.55m and z = +0.55m */}
           <line x1="156" y1="18" x2="156" y2="120" stroke="#ffaa33" strokeWidth="1" strokeDasharray="1 3" opacity="0.4" />
           <line x1="284" y1="18" x2="284" y2="120" stroke="#ffaa33" strokeWidth="1" strokeDasharray="1 3" opacity="0.4" />
 
@@ -1097,9 +1096,9 @@ function LiveDistributionPlot({
         </svg>
 
         <div className="plot-axis-labels">
-          <span>SLIT A (-0.55m)</span>
-          <span>SCREEN CENTER (Z = 0)</span>
-          <span>SLIT B (+0.55m)</span>
+          <span>SLIT A PROJECTION (-0.55m)</span>
+          <span>SCREEN OPTICAL AXIS (Z = 0)</span>
+          <span>SLIT B PROJECTION (+0.55m)</span>
         </div>
       </div>
 
@@ -1110,7 +1109,40 @@ function LiveDistributionPlot({
         </div>
         <div className="legend-item">
           <span className="legend-swatch line-swatch" style={{ borderColor: color.hex }} />
-          <span>{whichPath ? "Two Classical Piles (No Cross-Term Superposition)" : `Interference Pattern (λ = ${wavelength}nm)`}</span>
+          <span>{whichPath ? "Two Classical Piles (No Cross-Term Interference)" : `Interference Pattern (|Ψ_A + Ψ_B|², λ = ${wavelength}nm)`}</span>
+        </div>
+      </div>
+
+      {/* Real-Time Scientific Diagnostics Grid */}
+      <div className="plot-diagnostic-grid">
+        <div className="diagnostic-tile">
+          <span className="diag-kicker">FRINGE VISIBILITY (V)</span>
+          <span className={`diag-value ${whichPath ? "val-amber" : "val-cyan"}`}>
+            {whichPath ? "0.0% (Zero Fringes)" : "96.4% (High Contrast)"}
+          </span>
+          <span className="diag-sub">V = (I_max - I_min) / (I_max + I_min)</span>
+        </div>
+
+        <div className="diagnostic-tile">
+          <span className="diag-kicker">FRINGE SPACING (Δz)</span>
+          <span className="diag-value">
+            {whichPath ? "N/A (2 Separate Clumps)" : `~${calculatedSpacing} m`}
+          </span>
+          <span className="diag-sub">Δz = λ · L / d (Screen L = 5.68m, d = 1.10m)</span>
+        </div>
+
+        <div className="diagnostic-tile">
+          <span className="diag-kicker">QUANTUM STATE |Ψ⟩</span>
+          <span className="diag-value state-formula">
+            {whichPath ? "|Slit A⟩ or |Slit B⟩" : "1/√2 (|Slit A⟩ + |Slit B⟩)"}
+          </span>
+          <span className="diag-sub">{whichPath ? "Decohered / Classical Mixture" : "Pure Spatial Wavepacket Superposition"}</span>
+        </div>
+
+        <div className="diagnostic-tile">
+          <span className="diag-kicker">APPARATUS GEOMETRY</span>
+          <span className="diag-value">L = 5.68m · d = 1.10m</span>
+          <span className="diag-sub">Dual Slits a = 0.36m · 14.3m Optical Rail</span>
         </div>
       </div>
     </div>
@@ -1134,16 +1166,24 @@ export default function DoubleSlitLab() {
   const [singleShotTrigger, setSingleShotTrigger] = useState(0);
   const [guideStep, setGuideStep] = useState(1);
   const [showTheoryModal, setShowTheoryModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoStartTime, setVideoStartTime] = useState(0);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isMaximized) {
-        setIsMaximized(false);
+      if (e.key === "Escape") {
+        if (showVideoModal) {
+          setShowVideoModal(false);
+        } else if (showTheoryModal) {
+          setShowTheoryModal(false);
+        } else if (isMaximized) {
+          setIsMaximized(false);
+        }
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isMaximized]);
+  }, [isMaximized, showTheoryModal, showVideoModal]);
 
   const currentColor = useMemo(() => wavelengthToColor(wavelength), [wavelength]);
 
@@ -1208,71 +1248,31 @@ export default function DoubleSlitLab() {
       {/* Sleek Studio Header */}
       <header className="studio-topbar">
         <div className="topbar-left">
-          <div className="studio-logo">Ψ</div>
-          <div>
-            <h1 className="studio-title">QUANTUM OPTICS LAB</h1>
-            <span className="studio-subtitle">THE DOUBLE-SLIT EXPERIMENT & WAVE-PARTICLE DUALITY</span>
+          <div className="studio-logo" aria-hidden="true">Ψ</div>
+          <div className="topbar-branding">
+            <div className="topbar-title-row">
+              <h1 className="studio-title">QUANTUM OPTICS LAB</h1>
+              <span className="studio-status-pill">
+                <span className="status-dot-live" />
+                SIMULATION ACTIVE
+              </span>
+            </div>
+            <span className="studio-subtitle">THE DOUBLE-SLIT EXPERIMENT &amp; WAVE-PARTICLE DUALITY</span>
           </div>
         </div>
 
         {/* Global Toolbar */}
         <div className="topbar-actions">
-          {/* Slow-Motion Speed Selector */}
-          <div className="speed-pills" role="radiogroup" aria-label="Simulation Speed">
-            <button
-              onClick={() => setSpeedMultiplier(1.0)}
-              className={`speed-btn ${speedMultiplier === 1.0 ? "active" : ""}`}
-              title="Normal simulation speed"
-            >
-              1x NORMAL
-            </button>
-            <button
-              onClick={() => setSpeedMultiplier(0.25)}
-              className={`speed-btn ${speedMultiplier === 0.25 ? "active" : ""}`}
-              title="Slow Motion (4x slower)"
-            >
-              0.25x SLOW
-            </button>
-            <button
-              onClick={() => setSpeedMultiplier(0.1)}
-              className={`speed-btn ${speedMultiplier === 0.1 ? "active" : ""}`}
-              title="Ultra Slow-Motion (10x slower)"
-            >
-              0.1x ULTRA
-            </button>
-          </div>
-
           <button
-            onClick={() => setShowWaveOverlay((v) => !v)}
-            className={`topbar-btn ${showWaveOverlay ? "btn-active" : ""}`}
-            title="Overlay continuous theoretical wave fringes on phosphor detector screen"
+            onClick={() => {
+              setVideoStartTime(0);
+              setShowVideoModal(true);
+            }}
+            className="topbar-btn video-guide-btn"
+            title="Watch YouTube video explaining the double-slit experiment & observer effect"
           >
-            <span>≋ {showWaveOverlay ? "HIDE WAVE OVERLAY" : "SHOW WAVE OVERLAY"}</span>
-          </button>
-
-          <button
-            onClick={() => setIsMaximized((m) => !m)}
-            className={`topbar-btn ${isMaximized ? "btn-active" : ""}`}
-            title={isMaximized ? "Exit Fullscreen Theater View (Esc)" : "Expand to Fullscreen Theater View"}
-          >
-            <span>{isMaximized ? "❐ RESTORE" : "⛶ EXPAND VIEW"}</span>
-          </button>
-
-          <button
-            onClick={toggleSound}
-            className={`topbar-btn ${soundEnabled ? "btn-active" : ""}`}
-            title="Pleasant quantum chimes (pure sine blips, zero static drone)"
-            aria-pressed={soundEnabled}
-          >
-            <span>{soundEnabled ? "🔊 CHIMES ON" : "🔇 MUTED"}</span>
-          </button>
-
-          <button
-            onClick={handleReset}
-            className="topbar-btn clear-btn"
-            title="Clear accumulated hits on detector screen"
-          >
-            <span>↺ CLEAR SCREEN</span>
+            <span className="yt-badge">▶</span>
+            <span>VIDEO GUIDE</span>
           </button>
 
           <button
@@ -1280,7 +1280,7 @@ export default function DoubleSlitLab() {
             className="topbar-btn theory-btn"
             title="Read physical explanation of wave-particle duality"
           >
-            <span>? PHYSICS EXPLANATION</span>
+            <span>📖 THEORY &amp; MATH</span>
           </button>
         </div>
       </header>
@@ -1301,68 +1301,178 @@ export default function DoubleSlitLab() {
             triggerSinglePhoton={singleShotTrigger}
           />
 
-          {/* Camera View Presets Toolbar */}
-          <div className="camera-view-bar" role="toolbar" aria-label="Camera Presets">
-            <span className="cam-bar-label">CAMERA:</span>
-            {CAMERA_PRESETS.map((preset) => (
+          {/* TOP HUD DECK: Seamless Full-Width Glass Bar */}
+          <div className="viewport-top-hud">
+            {/* Left: Master Quantum Observation State Switcher */}
+            <div className="hud-observer-switcher">
+              <div className="hud-mode-pill-group" role="group" aria-label="Quantum State Switcher">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (whichPath) {
+                      setWhichPath(false);
+                      handleReset();
+                    }
+                  }}
+                  className={`hud-mode-btn wave-mode ${!whichPath ? "active" : ""}`}
+                  title="No observer: photon travels in wave superposition through both slits, producing 5+ interference fringes"
+                  aria-pressed={!whichPath}
+                >
+                  <span className="hud-mode-icon">🌊</span>
+                  <div className="hud-mode-content">
+                    <span className="hud-mode-title">NO OBSERVER</span>
+                    <span className="hud-mode-status">WAVE SUPERPOSITION</span>
+                  </div>
+                  {!whichPath && <span className="hud-pulse-dot dot-cyan" />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!whichPath) {
+                      setWhichPath(true);
+                      handleReset();
+                    }
+                  }}
+                  className={`hud-mode-btn observer-mode ${whichPath ? "active" : ""}`}
+                  title="Observer active: detectors at slits measure which slit each photon enters, collapsing superposition into 2 classical bands"
+                  aria-pressed={whichPath}
+                >
+                  <span className="hud-mode-icon">👁️</span>
+                  <div className="hud-mode-content">
+                    <span className="hud-mode-title">OBSERVER ACTIVE</span>
+                    <span className="hud-mode-status">PARTICLE COLLAPSE</span>
+                  </div>
+                  {whichPath && <span className="hud-pulse-dot dot-amber" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Center: Camera Angles Toolbar */}
+            <div className="hud-camera-toolbar" role="toolbar" aria-label="Camera Presets">
+              <span className="hud-deck-label">CAMERA:</span>
+              <div className="hud-cam-btn-group">
+                {CAMERA_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => selectPreset(preset.id)}
+                    className={`hud-cam-btn ${activePreset === preset.id ? "active" : ""}`}
+                    title={preset.description}
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Viewport Utilities Dock */}
+            <div className="hud-utility-dock">
               <button
-                key={preset.id}
-                onClick={() => selectPreset(preset.id)}
-                className={`cam-preset-btn ${activePreset === preset.id ? "active" : ""}`}
-                title={preset.description}
+                onClick={toggleSound}
+                className={`hud-tool-btn ${soundEnabled ? "tool-active" : ""}`}
+                title={soundEnabled ? "Audio chimes active (Click to Mute)" : "Muted (Click to enable audio chimes)"}
+                aria-pressed={soundEnabled}
               >
-                {preset.name}
+                <span>{soundEnabled ? "🔊 SOUND ON" : "🔇 MUTED"}</span>
               </button>
-            ))}
+
+              <button
+                onClick={() => setShowWaveOverlay((v) => !v)}
+                className={`hud-tool-btn ${showWaveOverlay ? "tool-active" : ""}`}
+                title="Overlay continuous theoretical wave fringes on phosphor detector screen"
+              >
+                <span>≋ {showWaveOverlay ? "WAVE ON" : "WAVE OFF"}</span>
+              </button>
+
+              <button
+                onClick={handleReset}
+                className="hud-tool-btn clear-btn"
+                title="Clear accumulated hits on detector screen"
+              >
+                <span>↺ CLEAR</span>
+              </button>
+
+              <button
+                onClick={() => setIsMaximized((m) => !m)}
+                className={`hud-tool-btn ${isMaximized ? "tool-active" : ""}`}
+                title={isMaximized ? "Exit Fullscreen Theater View (Esc)" : "Expand to Fullscreen Theater View"}
+              >
+                <span>{isMaximized ? "❐ EXIT" : "⛶ EXPAND"}</span>
+              </button>
+            </div>
           </div>
 
-          {/* In-Scene Floating Telemetry Badge */}
-          <div className="telemetry-badge">
-            <div className="telemetry-item">
-              <span className="telemetry-label">DETECTIONS</span>
-              <span className="telemetry-value">{String(totalCount).padStart(5, "0")}</span>
-            </div>
-            <div className="telemetry-divider" />
-            <div className="telemetry-item">
-              <span className="telemetry-label">WAVELENGTH</span>
-              <span className="telemetry-value" style={{ color: currentColor.hex }}>
-                {wavelength} nm
-              </span>
-            </div>
-            <div className="telemetry-divider" />
-            <div className="telemetry-item">
-              <span className="telemetry-label">BEHAVIOR</span>
-              <span className={`telemetry-value ${whichPath ? "state-measured" : "state-quantum"}`}>
-                {whichPath ? "2 CLASSICAL BANDS" : "5+ WAVE FRINGES"}
-              </span>
-            </div>
+          {/* Interactive Navigation Hint */}
+          <div className="viewport-orbit-hint" aria-hidden="true">
+            <span>Left-Click Drag: Rotate Apparatus • Scroll: Zoom • Right-Click: Pan</span>
           </div>
 
-          {/* Quick Action Buttons on Canvas */}
-          <div className="canvas-quick-actions">
-            <button
-              onClick={() => setIsRunning((r) => !r)}
-              className={`quick-action-btn ${isRunning ? "btn-pause" : "btn-play"}`}
-              title={isRunning ? "Pause photon emission stream" : "Resume photon emission stream"}
-            >
-              {isRunning ? "❚❚ PAUSE" : "▶ RESUME"}
-            </button>
+          {/* BOTTOM HUD DECK: Seamless Full-Width Glass Bar */}
+          <div className="viewport-bottom-hud">
+            {/* Left: Live Instrument Telemetry */}
+            <div className="hud-telemetry-cluster">
+              <div className="hud-metric">
+                <span className="hud-metric-kicker">DETECTIONS</span>
+                <span className="hud-metric-val">{String(totalCount).padStart(5, "0")}</span>
+              </div>
+              <div className="hud-metric-divider" />
+              <div className="hud-metric">
+                <span className="hud-metric-kicker">WAVELENGTH</span>
+                <span className="hud-metric-val" style={{ color: currentColor.hex }}>
+                  {wavelength} nm
+                </span>
+              </div>
+              <div className="hud-metric-divider" />
+              <div className="hud-metric">
+                <span className="hud-metric-kicker">PATTERN</span>
+                <span className={`hud-metric-val ${whichPath ? "val-amber" : "val-cyan"}`}>
+                  {whichPath ? "2 CLASSICAL BANDS" : "5+ WAVE FRINGES"}
+                </span>
+              </div>
+            </div>
 
-            <button
-              onClick={fireSingle}
-              className="quick-action-btn btn-fire"
-              title="Fire exactly one single photon in slow motion"
-            >
-              ⚡ FIRE 1 PHOTON
-            </button>
+            {/* Center: Playback Stream Control */}
+            <div className="hud-playback-cluster">
+              <button
+                onClick={() => setIsRunning((r) => !r)}
+                className={`hud-stream-btn ${isRunning ? "stream-pause" : "stream-play"}`}
+                title={isRunning ? "Pause continuous photon stream" : "Resume continuous photon stream"}
+              >
+                {isRunning ? "❚❚ PAUSE STREAM" : "▶ RESUME STREAM"}
+              </button>
 
-            <button
-              onClick={() => setIsMaximized((m) => !m)}
-              className="quick-action-btn btn-maximize"
-              title={isMaximized ? "Restore default window view (Esc)" : "Maximize viewport to full screen"}
-            >
-              {isMaximized ? "❐ RESTORE" : "⛶ FULLSCREEN"}
-            </button>
+              <button
+                onClick={fireSingle}
+                className="hud-single-btn"
+                title="Fire exactly one single photon in slow motion"
+              >
+                ⚡ FIRE 1 PHOTON
+              </button>
+            </div>
+
+            {/* Right: Simulation Speed Pills */}
+            <div className="hud-speed-cluster" role="radiogroup" aria-label="Simulation Speed">
+              <span className="hud-deck-label">SPEED:</span>
+              <div className="hud-speed-pills">
+                {[
+                  { value: 0.1, label: "0.1x", title: "Ultra Slow-Motion (10x slower) — Inspect single wavepacket splitting" },
+                  { value: 0.25, label: "0.25x", title: "Slow-Motion (4x slower)" },
+                  { value: 0.5, label: "0.5x", title: "Half Speed (2x slower)" },
+                  { value: 1.0, label: "1x", title: "Normal Real-Time Speed" },
+                  { value: 2.0, label: "2x", title: "Fast (2x faster)" },
+                  { value: 4.0, label: "4x", title: "Ultra Fast (4x faster) — Rapid accumulation" },
+                ].map((s) => (
+                  <button
+                    key={s.value}
+                    onClick={() => setSpeedMultiplier(s.value)}
+                    className={`hud-speed-btn ${speedMultiplier === s.value ? "active" : ""}`}
+                    title={s.title}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1378,42 +1488,14 @@ export default function DoubleSlitLab() {
 
         {/* Right Column: Complete Interactive Control Deck */}
         <div className="controls-deck">
-          {/* Card 1: Observation State Toggle */}
+          {/* Card 1: Coherent Laser Source Calibration */}
           <div className="control-card">
             <div className="card-header">
-              <span className="card-tag">OBSERVATION STATE (WHICH-PATH)</span>
-              <span className={`mode-badge ${whichPath ? "badge-measured" : "badge-quantum"}`}>
-                {whichPath ? "COLLAPSED INTO PARTICLES" : "WAVE SUPERPOSITION"}
-              </span>
-            </div>
-
-            <div className="switch-wrapper">
-              <button
-                onClick={() => {
-                  setWhichPath((v) => !v);
-                  handleReset();
-                }}
-                className={`physical-toggle ${whichPath ? "toggle-active" : ""}`}
-                aria-pressed={whichPath}
-              >
-                <div className="toggle-slider" />
-                <span className="toggle-label left-label">NO OBSERVER (WAVE)</span>
-                <span className="toggle-label right-label">OBSERVER ON (PARTICLES)</span>
-              </button>
-            </div>
-
-            <p className="card-summary">
-              {whichPath
-                ? "Sensors at the slits detect which path each photon enters, destroying the wave superposition. Photons act like classical bullets and hit the screen in TWO DISTINCT BANDS directly behind the slits."
-                : "No path measurement is made. Each photon travels through BOTH slits as a probability wave, creating 5+ ALTERNATING BRIGHT AND DARK FRINGES with a bright stripe right in the center."}
-            </p>
-          </div>
-
-          {/* Card 2: Laser Wavelength & Emission Rate */}
-          <div className="control-card">
-            <div className="card-header">
-              <span className="card-tag">LASER WAVELENGTH (λ)</span>
-              <span className="wl-spec" style={{ color: currentColor.hex }}>
+              <div>
+                <span className="card-tag">MODULE 02 // SOURCE CALIBRATION</span>
+                <h4 className="card-subheading">Monochromatic Laser Wavelength (λ)</h4>
+              </div>
+              <span className="wl-spec-badge" style={{ color: currentColor.hex, borderColor: `${currentColor.hex}44`, backgroundColor: `${currentColor.hex}15` }}>
                 {wavelength} nm · {currentColor.name}
               </span>
             </div>
@@ -1444,44 +1526,119 @@ export default function DoubleSlitLab() {
               />
             </div>
 
-            <div className="rate-row">
-              <span className="rate-label">EMISSION RATE:</span>
-              <div className="rate-pills">
-                {[1, 5, 15, 35].map((rate) => (
+            {/* Quick Spectral Line Shortcuts */}
+            <div className="spectral-shortcuts-row">
+              <span className="spectral-label">SPECTRAL PRESETS:</span>
+              <div className="spectral-pills">
+                {[
+                  { nm: 405, label: "405nm Violet", hex: "#9b51e0", note: "Tighter Fringes" },
+                  { nm: 488, label: "488nm Cyan", hex: "#00d4ff", note: "Argon Line" },
+                  { nm: 532, label: "532nm Green", hex: "#00ff87", note: "Reference DPSS" },
+                  { nm: 633, label: "633nm He-Ne Red", hex: "#ff3b30", note: "Wider Fringes" },
+                ].map((spec) => (
                   <button
-                    key={rate}
-                    onClick={() => setEmissionRate(rate)}
-                    className={`rate-pill ${emissionRate === rate ? "selected" : ""}`}
+                    key={spec.nm}
+                    type="button"
+                    onClick={() => setWavelength(spec.nm)}
+                    className={`spectral-pill ${wavelength === spec.nm ? "active" : ""}`}
+                    style={wavelength === spec.nm ? { borderColor: spec.hex, color: spec.hex, background: `${spec.hex}18` } : {}}
+                    title={`${spec.label} (${spec.note})`}
                   >
-                    {rate} / sec
+                    <span className="spectral-dot" style={{ backgroundColor: spec.hex }} />
+                    {spec.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="rate-row">
+              <span className="rate-label">EMISSION FLUX RATE:</span>
+              <div className="rate-pills">
+                {[
+                  { rate: 1, label: "1 / s (Single)" },
+                  { rate: 5, label: "5 / s" },
+                  { rate: 15, label: "15 / s" },
+                  { rate: 35, label: "35 / s (Stream)" },
+                ].map((item) => (
+                  <button
+                    key={item.rate}
+                    onClick={() => setEmissionRate(item.rate)}
+                    className={`rate-pill ${emissionRate === item.rate ? "selected" : ""}`}
+                  >
+                    {item.label}
                   </button>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Card 3: 4-Step Guided Tour Quick Select */}
+          {/* Card 2: Guided Experiments Tour */}
           <div className="control-card">
             <div className="card-header">
-              <span className="card-tag">GUIDED EXPERIMENTS</span>
+              <div>
+                <span className="card-tag">MODULE 03 // INVESTIGATION SCENARIOS</span>
+                <h4 className="card-subheading">Interactive Quantum Phenomenon Tour</h4>
+              </div>
               <span className="step-indicator">STEP {guideStep + 1} OF 4</span>
             </div>
 
             <div className="tour-pill-grid">
               {[
-                { idx: 0, label: "1. Classical Piles" },
-                { idx: 1, label: "2. Wave Fringes" },
-                { idx: 2, label: "3. Observer Collapse" },
-                { idx: 3, label: "4. Violet Wavelength" },
+                { idx: 0, label: "1. Classical Particle Piles", sub: "Observer ON · 2 straight lines behind slits" },
+                { idx: 1, label: "2. Wave Superposition Fringes", sub: "No Observer · Multi-fringe interference emerges" },
+                { idx: 2, label: "3. Which-Path Observer Collapse", sub: "Slit detectors active · Superposition collapses" },
+                { idx: 3, label: "4. Violet Wavelength Compression", sub: "λ = 405nm · Fringes compress visibly" },
               ].map((step) => (
                 <button
                   key={step.idx}
                   onClick={() => handleStepSelect(step.idx)}
-                  className={`tour-pill-btn ${guideStep === step.idx ? "active" : ""}`}
+                  className={`tour-card-btn ${guideStep === step.idx ? "active" : ""}`}
                 >
-                  {step.label} ↗
+                  <div className="tour-card-header">
+                    <span className="tour-card-title">{step.label}</span>
+                    <span className="tour-card-arrow">↗</span>
+                  </div>
+                  <span className="tour-card-sub">{step.sub}</span>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Card 3: Theory & Video Guide Companion */}
+          <div className="control-card media-companion-card">
+            <div className="media-companion-header">
+              <div className="media-badge-icon">Ψ</div>
+              <div>
+                <span className="card-tag">MODULE 04 // PHENOMENON &amp; MEDIA</span>
+                <h4 className="media-companion-title">Wave-Particle Duality &amp; Measurement Theory</h4>
+                <p className="media-companion-desc">
+                  Explore how single photons interfere with themselves as probability wavepackets, and why physical detection at the slits destroys phase coherence.
+                </p>
+              </div>
+            </div>
+
+            <div className="media-companion-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setVideoStartTime(0);
+                  setShowVideoModal(true);
+                }}
+                className="companion-btn companion-video-btn"
+                title="Watch Dr. Quantum's animated double slit video"
+              >
+                <span className="yt-badge">▶</span>
+                <span>Watch Video Guide (Dr. Quantum Animation)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowTheoryModal(true)}
+                className="companion-btn companion-theory-btn"
+                title="Read mathematical and physical explanation"
+              >
+                <span>📖 Physics &amp; Mathematics Guide</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1519,6 +1676,88 @@ export default function DoubleSlitLab() {
                   <strong>&quot;Observer&quot; is NOT human consciousness:</strong> Any physical interaction (a photodetector, a polarization filter, or an atom scattering) that entangles with the photon constitutes an &quot;observation&quot;.
                 </li>
               </ul>
+
+              <div className="modal-video-cta-box">
+                <div className="modal-video-cta-info">
+                  <span className="modal-video-cta-title">Prefer an animated video breakdown?</span>
+                  <span className="modal-video-cta-desc">Watch Dr. Quantum explain wave-particle duality and the observer effect on YouTube.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTheoryModal(false);
+                    setShowVideoModal(true);
+                  }}
+                  className="modal-video-cta-btn"
+                >
+                  <span className="yt-badge">▶</span>
+                  <span>WATCH VIDEO EXPLANATION</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* YouTube Video Explanation Modal */}
+      {showVideoModal && (
+        <div className="modal-backdrop" onClick={() => setShowVideoModal(false)}>
+          <div className="modal-content video-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="video-modal-title-group">
+                <span className="yt-badge">▶ YOUTUBE</span>
+                <h3>The Double-Slit Experiment &amp; The Observer Effect</h3>
+              </div>
+              <button
+                onClick={() => setShowVideoModal(false)}
+                className="modal-close-btn"
+                aria-label="Close video explanation modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="video-player-wrapper">
+              <iframe
+                key={videoStartTime}
+                src={`https://www.youtube-nocookie.com/embed/Ms-CVF540fo?autoplay=1&rel=0&start=${videoStartTime}`}
+                title="The Double Slit Experiment Explained by Dr Quantum"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="youtube-iframe"
+              />
+            </div>
+
+            <div className="video-modal-footer">
+              <div className="video-guide-points">
+                <span className="guide-points-title">Jump to Key Stages:</span>
+                <div className="guide-chips">
+                  {[
+                    { start: 0, time: "0:00", label: "Classical Particles (2 Bands)" },
+                    { start: 80, time: "1:20", label: "Wave Interference (Fringes)" },
+                    { start: 150, time: "2:30", label: "Single Photons Creating Fringes" },
+                    { start: 230, time: "3:50", label: "The Observer Effect (Wave Collapse)" },
+                  ].map((ch) => (
+                    <button
+                      key={ch.start}
+                      type="button"
+                      onClick={() => setVideoStartTime(ch.start)}
+                      className={`guide-chip-btn ${videoStartTime === ch.start ? "active" : ""}`}
+                      title={`Jump to ${ch.time}`}
+                    >
+                      <strong>{ch.time}</strong> {ch.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <a
+                href={videoStartTime > 0 ? `https://www.youtube.com/watch?v=Ms-CVF540fo&t=${videoStartTime}s` : "https://www.youtube.com/watch?v=Ms-CVF540fo"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="open-yt-btn"
+              >
+                Open on YouTube ↗
+              </a>
             </div>
           </div>
         </div>
