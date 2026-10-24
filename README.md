@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚛️ QuantaLab
+# ⚛️ QuantumBench
 ### Virtual 3D Quantum & Modern Physics Laboratory
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.4.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
