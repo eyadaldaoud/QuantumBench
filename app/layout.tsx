@@ -13,11 +13,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Quantum Optics Lab — The 3D Double-Slit Experiment",
-  description: "A cinematic, interactive 3D laboratory apparatus simulating single-photon wave-particle duality, slit interference, and physical observer measurement decoherence.",
+  title: "QuantaLab — Virtual 3D Quantum & Modern Physics Laboratory",
+  description:
+    "An open-source, interactive 3D simulation platform for exploring quantum mechanics, wave-particle duality, space quantization, and modern physics directly in your browser.",
+  keywords: [
+    "Quantum Physics",
+    "Double-Slit Experiment",
+    "Three.js 3D Simulation",
+    "Wave-Particle Duality",
+    "Observer Effect",
+    "Stern-Gerlach",
+    "Quantum Tunneling",
+    "Quantum Mechanics Simulator",
+  ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"

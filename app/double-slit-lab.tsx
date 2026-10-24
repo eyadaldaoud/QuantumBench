@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import * as THREE from "three";
 import { quantumAudio } from "./quantum-audio";
 import {
@@ -1248,6 +1249,11 @@ export default function DoubleSlitLab() {
       {/* Sleek Studio Header */}
       <header className="studio-topbar">
         <div className="topbar-left">
+          <Link href="/" className="back-hub-btn" title="Back to QuantaLab Experiments Catalog">
+            <span className="back-arrow">←</span>
+            <span>CATALOG</span>
+          </Link>
+          <div className="topbar-divider-v" />
           <div className="studio-logo" aria-hidden="true">Ψ</div>
           <div className="topbar-branding">
             <div className="topbar-title-row">
