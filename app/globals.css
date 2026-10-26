@@ -3553,3 +3553,384 @@ button, input, select {
     padding: 1.5rem;
   }
 }
+
+/* ==========================================================================
+   Quantum Eraser Laboratory Styles
+   ========================================================================== */
+
+.detector-view-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.view-pill-group {
+  display: flex;
+  gap: 0.35rem;
+  background: rgba(4, 14, 26, 0.7);
+  padding: 0.25rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border-dim);
+  flex-wrap: wrap;
+}
+
+.view-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.view-pill-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.view-pill-btn.active {
+  color: #000;
+  background: #00d4ff;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.45);
+}
+
+.view-pill-btn.pill-a.active {
+  background: #00d4ff;
+  color: #000;
+}
+
+.view-pill-btn.pill-b.active {
+  background: #ff8800;
+  color: #000;
+  box-shadow: 0 0 12px rgba(255, 136, 0, 0.45);
+}
+
+.view-pill-btn.pill-overlay.active {
+  background: linear-gradient(90deg, #00d4ff, #ff8800);
+  color: #000;
+}
+
+.legend-shape {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.shape-circle {
+  border-radius: 50%;
+}
+
+.shape-triangle {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 9px solid #ff8800;
+  background: transparent !important;
+}
+
+.card-dimmed {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  pointer-events: none;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.theta-dial-card {
+  transition: all 0.25s ease;
+}
+
+.dial-visual-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(3, 11, 20, 0.6);
+  border-radius: 8px;
+  border: 1px solid var(--border-dim);
+}
+
+.dial-canvas-wrap {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dial-stat-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.dial-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.dial-stat-item .kicker {
+  color: var(--ink-muted);
+}
+
+.dial-stat-item .val {
+  font-weight: 700;
+  color: var(--ink-bright);
+}
+
+.dial-stat-item .val-cyan {
+  color: #00d4ff;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+
+.walkthrough-banner {
+  background: linear-gradient(135deg, rgba(8, 22, 38, 0.95), rgba(4, 13, 22, 0.98));
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  box-shadow: 0 0 25px rgba(0, 212, 255, 0.12);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.walkthrough-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+  gap: 1rem;
+}
+
+.walkthrough-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #00d4ff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.btn-walkthrough-close {
+  background: transparent;
+  border: 1px solid var(--border-dim);
+  color: var(--ink-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.btn-walkthrough-close:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.walkthrough-step-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.walkthrough-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: rgba(3, 11, 20, 0.6);
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.walkthrough-step-btn:hover {
+  color: #fff;
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.walkthrough-step-btn.active {
+  color: #00d4ff;
+  border-color: #00d4ff;
+  background: rgba(0, 212, 255, 0.08);
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.2);
+}
+
+.walkthrough-step-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.walkthrough-step-btn.active .walkthrough-step-num {
+  background: #00d4ff;
+  color: #000;
+}
+
+.walkthrough-body {
+  margin-bottom: 1rem;
+}
+
+.walkthrough-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.45rem;
+}
+
+.walkthrough-explainer {
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink-normal);
+}
+
+.walkthrough-takeaway {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(0, 212, 255, 0.06);
+  border-left: 3px solid #00d4ff;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--ink-bright);
+}
+
+.walkthrough-takeaway strong {
+  color: #00d4ff;
+}
+
+.walkthrough-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border-dim);
+  padding-top: 0.85rem;
+}
+
+.walkthrough-nav-left,
+.walkthrough-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-walkthrough-nav {
+  padding: 0.4rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
+  color: var(--ink-bright);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-walkthrough-nav:hover:not(:disabled) {
+  border-color: #00d4ff;
+  color: #00d4ff;
+}
+
+.btn-walkthrough-nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-walkthrough-jump {
+  padding: 0.4rem 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  border-radius: 6px;
+  background: #00d4ff;
+  color: #000;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.35);
+}
+
+.btn-walkthrough-jump:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(0, 212, 255, 0.55);
+}
+
+.walkthrough-step-counter {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 480px) {
+  .detector-view-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .view-pill-group {
+    justify-content: center;
+  }
+  .view-pill-btn {
+    font-size: 0.66rem;
+    padding: 0.3rem 0.55rem;
+  }
+  .dial-visual-row {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .dial-stat-item {
+    justify-content: center;
+    gap: 0.75rem;
+  }
+  .walkthrough-step-tabs {
+    flex-direction: column;
+  }
+  .walkthrough-controls {
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: stretch;
+  }
+  .walkthrough-nav-left,
+  .walkthrough-nav-right {
+    justify-content: center;
+  }
+}
