@@ -102,6 +102,64 @@ export const EXPERIMENTS: ExperimentMetadata[] = [
       "Integrated YouTube video guide with key timestamp chapter jumps",
     ],
   },
+  {
+    id: "quantum-eraser",
+    slug: "quantum-eraser",
+    title: "The Quantum Eraser",
+    subtitle: "Which-Path Tagging, Polarization & State Erasure",
+    category: "Quantum Mechanics",
+    status: "active",
+    difficulty: "Intermediate",
+    route: "/experiments/quantum-eraser",
+    icon: "🪞",
+    accentColor: "#a855f7",
+    accentGlow: "rgba(168, 85, 247, 0.25)",
+    summary:
+      "Tag slit paths with orthogonal linear polarizations to destroy interference, then sort photons through an analyzer at angle θ to reveal complementary fringe patterns in sorted subsets.",
+    historicalContext: {
+      year: "1982 / 2000 / 2002",
+      discoverers: "Scully & Drühl (1982 proposal); Kim et al. (2000); Walborn et al. (2002)",
+      significance:
+        "Demonstrates that which-path information recorded in physical degrees of freedom prevents interference, while an analyzer measuring in an uninformative basis reveals complementary interference subsets.",
+    },
+    keyFormulas: [
+      {
+        label: "Diffraction Envelope",
+        math: "g(x) = sinc²(π·a·x / (λ·L))",
+        description: "Normalized single-slit diffraction probability density",
+      },
+      {
+        label: "Channel A Probability",
+        math: "p_A(x) = 0.5 · g(x) · [1 + sin(2θ) · cos(2φ)]",
+        description: "Transmitted channel density showing fringes with visibility |sin(2θ)|",
+      },
+      {
+        label: "Channel B Probability",
+        math: "p_B(x) = 0.5 · g(x) · [1 - sin(2θ) · cos(2φ)]",
+        description: "Reflected channel density forming the complementary anti-fringe",
+      },
+      {
+        label: "Fringe Visibility",
+        math: "V = |sin(2θ)|",
+        description: "Theoretical visibility as a function of analyzer rotation angle θ",
+      },
+    ],
+    learningOutcomes: [
+      "Observe standard double-slit interference in untagged mode.",
+      "Understand why orthogonal H and V polarizations extinguish interference without requiring measurement.",
+      "Analyze how polarizing beam splitters sort photons into complementary fringe subsets.",
+      "Verify that the all-hits distribution is strictly flat and identical to the tagged envelope.",
+    ],
+    tags: ["Quantum Eraser", "Polarization", "Which-Path Information", "Fringe Visibility", "Complementarity"],
+    features: [
+      "Interactive 3D optical bench with dual-polarizer slit stage and rotatable analyzer",
+      "Continuous analyzer rotation angle θ from 0° to 90° with live |sin(2θ)| visibility readout",
+      "4 detector screen views: All Hits, Channel A, Channel B, and A & B Overlaid",
+      "Colorblind-safe visualization distinguishing detection channels by color and shape",
+      "Analytical Fraunhofer wave intensity curves with live Monte Carlo histogram overlay",
+      "3-step guided discovery walkthrough and mathematical theory modals",
+    ],
+  },
 ];
 
 export function getAllExperiments(): ExperimentMetadata[] {
