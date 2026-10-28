@@ -128,6 +128,7 @@ export default function Navbar({ currentExperimentSlug }: NavbarProps) {
             className="mobile-menu-toggle"
             onClick={() => setIsMobileMenuOpen((o) => !o)}
             aria-label="Toggle mobile menu"
+            aria-expanded={isMobileMenuOpen}
           >
             <span className="hamburger-bar" />
             <span className="hamburger-bar" />
@@ -152,6 +153,13 @@ export default function Navbar({ currentExperimentSlug }: NavbarProps) {
             onClick={() => setIsMobileMenuOpen(false)}
           >
             🌊 Double-Slit 3D Simulation (Live)
+          </Link>
+          <Link
+            href="/experiments/quantum-eraser"
+            className="mobile-nav-link live-link"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            🪞 Quantum Eraser Lab (Live)
           </Link>
           <Link
             href="/#about"

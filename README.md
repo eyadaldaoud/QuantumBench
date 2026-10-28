@@ -12,7 +12,7 @@
 
 An open-source, interactive 3D laboratory platform designed for students, educators, and researchers to visualize, manipulate, and explore foundational quantum mechanical and modern physics phenomena directly in the browser.
 
-[**Explore Experiments Hub**](http://localhost:3000) • [**Launch Double-Slit Lab**](http://localhost:3000/experiments/double-slit) • [**Developer Guide**](./docs/ADDING_AN_EXPERIMENT.md)
+[**Explore Experiments Hub**](https://thequantumbench.vercel.app/) • [**Launch Double-Slit Lab**](https://thequantumbench.vercel.app/experiments/double-slit) • [**Developer Guide**](https://github.com/eyadaldaoud/QuantumBench/blob/master/docs/ADDING_AN_EXPERIMENT.md)
 
 </div>
 
@@ -147,8 +147,8 @@ double-slit-experiment/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/eyadaldaoud/double-slit-experiment.git
-   cd double-slit-experiment
+   git clone https://github.com/eyadaldaoud/QuantumBench.git
+   cd QuantumBench
    ```
 
 2. Install dependencies:
