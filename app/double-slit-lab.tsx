@@ -5,6 +5,7 @@ import Link from "next/link";
 import * as THREE from "three";
 import { quantumAudio } from "./quantum-audio";
 import {
+  computeFringeSpacing,
   computeIntensity,
   PhysicsParams,
   samplePhotonImpact,
@@ -1043,7 +1044,7 @@ function LiveDistributionPlot({
 
   const color = wavelengthToColor(wavelength);
 
-  const calculatedSpacing = (0.924 * (wavelength / 532)).toFixed(2);
+  const calculatedSpacing = computeFringeSpacing(wavelength).toFixed(2);
 
   return (
     <div className="analytics-card-wide">

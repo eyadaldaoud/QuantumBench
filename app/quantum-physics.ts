@@ -1,8 +1,16 @@
 /**
  * Quantum Physics calculations for the Double-Slit Experiment.
- * Computes:
- * 1. Quantum Wave Superposition: Multi-fringe interference with bright central peak
- * 2. Physical Which-Path Measurement: Decoherence collapse into two distinct classical particle bands
+ *
+ * Model: Far-field Fraunhofer dual-slit interference modulated by
+ * single-slit diffraction sinc² envelope and environmental decoherence.
+ *
+ * 1. Quantum Wave Superposition: Multi-fringe interference with bright central peak:
+ *    I(z) = cos²(α) · sinc²(β)
+ *    where α = π·d·z / (λ·L),  β = π·a·z / (λ·L) = α · (a / d)
+ *
+ * 2. Physical Which-Path Measurement: Decoherence collapse into two distinct
+ *    classical particle bands centered directly behind each aperture:
+ *    I(z) = 0.5 · [I_A(z) + I_B(z)]
  */
 
 export interface WavelengthColor {
@@ -16,7 +24,16 @@ export interface WavelengthColor {
 }
 
 /**
- * Converts wavelength in nm (390 - 700 nm) to high-vibrance RGB color.
+ * Standard unnormalized cardinal sine function: sinc(u) = sin(u) / u, sinc(0) = 1.
+ */
+export function sinc(u: number): number {
+  if (Math.abs(u) < 1e-9) return 1.0;
+  return Math.sin(u) / u;
+}
+
+/**
+ * Converts wavelength in nm (390 - 700 nm) to high-vibrance RGB color
+ * using CIE spectral approximation with gamma correction.
  */
 export function wavelengthToColor(wavelength: number): WavelengthColor {
   let r = 0;
@@ -90,37 +107,57 @@ export interface PhysicsParams {
 }
 
 /**
+ * Physical apparatus dimensions in meters (calibrated to the 3D visualization bench):
+ * - Screen distance L = 5.68 m
+ * - Center-to-center slit separation d = 1.10 m (slit centers at z = -0.55m and z = +0.55m)
+ * - Individual slit aperture width a = 0.36 m
+ */
+export const APPARATUS_GEOMETRY = {
+  screenDistanceL: 5.68,
+  slitSeparationD: 1.10,
+  slitWidthA: 0.36,
+  slitOffset: 0.55,
+} as const;
+
+/**
  * Computes the relative probability density I(z) on the detector screen across z in [-1.9, 1.9].
  *
  * UNMONITORED (whichPath = false):
- * - Wave superposition creates 5+ crisp interference fringes with a bright center peak at z = 0.
+ * - Wave superposition: I(z) = cos²(α) · sinc²(β) · envelope(z)
+ *   yielding 5+ bright and dark interference fringes with a bright center peak at z = 0.
  *
  * OBSERVED (whichPath = true):
- * - Wavefunction collapses into classical particle behavior.
- * - Produces TWO distinct separate clumps directly behind the two slits (at z = -0.55 and z = +0.55),
- *   with a dark gap at z = 0.
+ * - Physical measurement collapses phase coherence (entanglement decoherence).
+ * - Produces TWO distinct classical particle bands centered directly behind the two slits
+ *   (at z = -0.55 and z = +0.55), with a dark central valley at z = 0.
  */
 export function computeIntensity(z: number, params: PhysicsParams): number {
   const { wavelengthNm, whichPath } = params;
 
   if (!whichPath) {
     // --- QUANTUM WAVE SUPERPOSITION ---
-    // Fringe spacing inversely proportional to wavelength (violet = tighter, red = wider)
+    // Spatial frequency is inversely proportional to wavelength (violet = tighter, red = wider)
     const waveFreq = (532 / wavelengthNm) * 3.4;
-    const phase = z * waveFreq;
+    const alpha = z * waveFreq;
+    const beta = alpha * (APPARATUS_GEOMETRY.slitWidthA / APPARATUS_GEOMETRY.slitSeparationD);
 
-    // Interference term cos^2(phase) gives alternating bright/dark bands
-    const interference = Math.pow(Math.cos(phase), 2);
+    // Interference modulation cos²(α)
+    const interference = Math.pow(Math.cos(alpha), 2);
 
-    // Diffraction envelope: smooth Gaussian falloff toward the screen edges
-    const envelope = Math.exp(-Math.pow(z / 1.45, 2));
+    // Diffraction envelope sinc²(β)
+    const sincVal = sinc(beta);
+    const diffractionEnvelope = sincVal * sincVal;
 
-    return interference * envelope;
+    // Smooth soft aperture/screen edge decay at the boundaries of the 3D rail/screen (z in [-1.9, +1.9])
+    const screenAperture = Math.exp(-Math.pow(z / 1.75, 4));
+
+    return interference * diffractionEnvelope * screenAperture;
   } else {
-    // --- CLASSICAL WHICH-PATH PARTICLES ---
-    // Two distinct classical single-slit particle distributions centered behind each slit (z = -0.55 and +0.55)
-    const slitOffset = 0.55;
-    const dispersion = 0.36; // Narrow enough to clearly separate the two bands with a dark central valley
+    // --- CLASSICAL WHICH-PATH PARTICLES (DECOHERENCE) ---
+    // Incoherent statistical mixture: 0.5 · [P_SlitA(z) + P_SlitB(z)]
+    // Two distinct classical single-slit particle distributions centered behind each slit
+    const slitOffset = APPARATUS_GEOMETRY.slitOffset;
+    const dispersion = APPARATUS_GEOMETRY.slitWidthA; // a = 0.36m
 
     const clumpLeft = Math.exp(-Math.pow((z + slitOffset) / dispersion, 2));
     const clumpRight = Math.exp(-Math.pow((z - slitOffset) / dispersion, 2));
@@ -130,7 +167,17 @@ export function computeIntensity(z: number, params: PhysicsParams): number {
 }
 
 /**
+ * Theoretical spacing between constructive interference peaks:
+ * Δz = (π / waveFreq) = (π / 3.4) * (wavelengthNm / 532)
+ */
+export function computeFringeSpacing(wavelengthNm: number): number {
+  return (Math.PI / 3.4) * (wavelengthNm / 532);
+}
+
+/**
  * Samples a random arrival coordinate (z, y) on the detector screen.
+ * - In which-path mode: stochastic particle trajectories through chosen slit
+ * - In wave mode: Monte Carlo stochastic inverse-probability sampling of Born probability density
  */
 export function samplePhotonImpact(params: PhysicsParams): { z: number; y: number; slitChoice: -1 | 1 } {
   const { whichPath } = params;
@@ -138,29 +185,35 @@ export function samplePhotonImpact(params: PhysicsParams): { z: number; y: numbe
   let z = 0;
 
   if (whichPath) {
-    // In particle mode, photon traveled through the chosen slit and lands in that slit's distribution
-    const slitOffset = slitChoice === -1 ? -0.55 : 0.55;
-    const dispersion = 0.36;
+    // In particle mode, photon traversed the chosen slit and lands in that slit's distribution
+    const slitOffset = slitChoice === -1 ? -APPARATUS_GEOMETRY.slitOffset : APPARATUS_GEOMETRY.slitOffset;
+    const dispersion = APPARATUS_GEOMETRY.slitWidthA; // 0.36
+    const sigma = dispersion / Math.SQRT2; // exact sigma for exp(-(z - mu)^2 / dispersion^2)
 
     // Box-Muller normal sampling centered on the chosen slit
     const u1 = Math.max(1e-6, Math.random());
     const u2 = Math.random();
     const normal = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-    z = THREE_clamp(slitOffset + normal * dispersion * 0.72, -1.85, 1.85);
+    z = THREE_clamp(slitOffset + normal * sigma, -1.85, 1.85);
   } else {
-    // In wave superposition mode, rejection sampling from the multi-fringe interference curve
+    // In wave superposition mode, rejection sampling from the multi-fringe Born probability distribution
     const maxZ = 1.88;
-    for (let i = 0; i < 80; i++) {
+    let accepted = false;
+    for (let i = 0; i < 150; i++) {
       const candidateZ = (Math.random() * 2 - 1) * maxZ;
       const prob = computeIntensity(candidateZ, params);
       if (Math.random() <= prob) {
         z = candidateZ;
+        accepted = true;
         break;
       }
     }
+    if (!accepted) {
+      z = (Math.random() * 2 - 1) * maxZ;
+    }
   }
 
-  // Vertical Gaussian spread representing the vertical beam height
+  // Vertical Gaussian spread representing the finite vertical beam height
   const u1 = Math.max(1e-6, Math.random());
   const u2 = Math.random();
   const normalY = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
