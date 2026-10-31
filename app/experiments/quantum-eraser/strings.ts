@@ -120,9 +120,9 @@ export const STRINGS = {
       "When orthogonal polarizations H and V mark which slit a photon traverses, the total state is |Ψ⟩ = (|1, H⟩ + |2, V⟩) / √2. The interference cross-term is proportional to the scalar product ⟨H|V⟩ = 0, so the total intensity distribution simplifies to g(x) without fringes. Which-path information is recorded in the physical polarization state.",
     analyzerExplanation:
       "When an analyzer oriented at angle θ projects the state onto linear basis vectors |θ⟩ and |θ + 90°⟩, the probability density splits into two complementary channels: p_A(x) = 0.5 · g(x) · (1 + sin(2θ) cos(2φ)) and p_B(x) = 0.5 · g(x) · (1 - sin(2θ) cos(2φ)). Their sum is identically g(x) for all angles θ. Which-path information is erased within each sorted channel by measuring in a basis that cannot distinguish H from V.",
-    learnMoreHeading: "Learn More: Delayed-Choice Experiments",
+    learnMoreHeading: "Was the Quantum Eraser Debunked?",
     learnMoreText:
-      "In delayed-choice configurations using entangled photon pairs generated via spontaneous parametric down-conversion, the sorting measurement on the 'idler' photon can be carried out after the 'signal' photon has already registered on the detector screen. The total unconditioned detection pattern remains flat at all times; interference fringes emerge exclusively when coincidence-counting filters the signal detections against corresponding idler detector channels.",
+      "The experiment itself is solid and has never been experimentally refuted. What physicists (notably Sabine Hossenfelder and Sean Carroll, around 2021-2023) corrected is a widespread misinterpretation of delayed-choice versions: the delayed-choice quantum eraser does NOT demonstrate retrocausality or the future changing the past. The total unfiltered detection pattern on the signal detector is always a featureless single-slit envelope with zero fringes. Fringes appear only when coincidence-counting post-selects signal hits against specific idler detector outcomes — a classical sorting of already-recorded data, not a physical rewriting of history. Causality and the No-Communication Theorem are fully preserved. In the polarization-based version simulated here (Walborn 2002), there is no entangled idler; the which-path information resides locally in polarization state and the analyzer simply sorts into complementary subsets.",
     citationsHeading: "References",
     citations: [
       {
@@ -140,6 +140,14 @@ export const STRINGS = {
         volume: "84",
         page: "1",
         year: "2000",
+      },
+      {
+        authors: "M. O. Scully and K. Drühl",
+        title: "Quantum eraser: A proposed photon correlation experiment concerning observation and 'delayed choice' in quantum mechanics",
+        journal: "Phys. Rev. A",
+        volume: "25",
+        page: "2208",
+        year: "1982",
       },
     ],
   },

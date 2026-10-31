@@ -36,21 +36,21 @@ interface CameraPreset {
 
 const CAMERA_PRESETS: CameraPreset[] = [
   {
-    name: "Perspective",
+    name: "Overview",
     id: "cinematic",
     position: new THREE.Vector3(-4.4, 2.2, 5.2),
     target: new THREE.Vector3(0.1, 0.0, 0),
     description: "Cinematic 45° optical bench view: full apparatus with clear slit separation",
   },
   {
-    name: "Beam Axis",
+    name: "Axis",
     id: "barrel",
     position: new THREE.Vector3(-6.8, 1.25, 0.0),
     target: new THREE.Vector3(1.2, 0.15, 0.0),
     description: "Look down the beam barrel through both slits directly to the detector",
   },
   {
-    name: "Detector",
+    name: "Screen",
     id: "detector",
     position: new THREE.Vector3(2.4, 0.35, 2.4),
     target: new THREE.Vector3(5.18, 0.1, 0),
@@ -64,7 +64,7 @@ const CAMERA_PRESETS: CameraPreset[] = [
     description: "Close-up of the dual aperture slits, micrometer stage, and which-path detector",
   },
   {
-    name: "Overhead",
+    name: "Top",
     id: "overhead",
     position: new THREE.Vector3(0.0, 9.2, 0.01),
     target: new THREE.Vector3(0.0, 0.0, 0),
@@ -94,6 +94,73 @@ function createGlowSpriteTexture(colorHex: string, size = 128): THREE.CanvasText
   return texture;
 }
 
+
+function createLabelSprite(text: string, subtitle?: string, accentColor = "#38e1ff"): THREE.Sprite {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 160;
+  const ctx = canvas.getContext("2d")!;
+
+  ctx.clearRect(0, 0, 512, 160);
+
+  // Rounded pill background
+  const r = 24;
+  const x = 16;
+  const y = 16;
+  const w = 480;
+  const h = 128;
+
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+
+  ctx.fillStyle = "rgba(4, 9, 16, 0.92)";
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = accentColor;
+  ctx.stroke();
+
+  // Glow line top indicator
+  ctx.fillStyle = accentColor;
+  ctx.fillRect(x + 40, y + 6, w - 80, 4);
+
+  // Text: Title
+  ctx.font = "bold 32px 'JetBrains Mono', 'Fira Code', monospace";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 256, subtitle ? y + 48 : y + 64);
+
+  // Text: Subtitle
+  if (subtitle) {
+    ctx.font = "600 20px 'JetBrains Mono', 'Fira Code', monospace";
+    ctx.fillStyle = accentColor;
+    ctx.fillText(subtitle, 256, y + 90);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+
+  const mat = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  });
+
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.9, 0.6, 1);
+  return sprite;
+}
+
 interface DoubleSlitSceneProps {
   wavelength: number;
   whichPath: boolean;
@@ -103,6 +170,7 @@ interface DoubleSlitSceneProps {
   resetKey: number;
   activePreset: "cinematic" | "barrel" | "detector" | "overhead" | "slits";
   showWaveOverlay: boolean;
+  showLabels: boolean;
   onHit: (z: number, y: number, slitChoice: -1 | 1) => void;
   triggerSinglePhoton: number;
 }
@@ -116,6 +184,7 @@ function DoubleSlitScene({
   resetKey,
   activePreset,
   showWaveOverlay,
+  showLabels,
   onHit,
   triggerSinglePhoton,
 }: DoubleSlitSceneProps) {
@@ -127,6 +196,7 @@ function DoubleSlitScene({
     speedMultiplier,
     isRunning,
     showWaveOverlay,
+    showLabels,
     onHit,
   });
 
@@ -138,9 +208,10 @@ function DoubleSlitScene({
       speedMultiplier,
       isRunning,
       showWaveOverlay,
+      showLabels,
       onHit,
     };
-  }, [wavelength, whichPath, emissionRate, speedMultiplier, isRunning, showWaveOverlay, onHit]);
+  }, [wavelength, whichPath, emissionRate, speedMultiplier, isRunning, showWaveOverlay, showLabels, onHit]);
 
   const targetCamPos = useRef(CAMERA_PRESETS[0].position.clone());
   const targetCamLook = useRef(CAMERA_PRESETS[0].target.clone());
@@ -247,36 +318,60 @@ function DoubleSlitScene({
       benchGroup.add(rail);
     });
 
-    // Helper: Carrier Stages
+    // Helper: Precision Optical Carrier Stages (Thorlabs / Newport style lab post & clamp)
     function createCarrierStage(xPos: number) {
       const stage = new THREE.Group();
       stage.position.set(xPos, -1.68, 0);
 
-      const clampBlock = new THREE.Mesh(
-        new THREE.BoxGeometry(0.72, 0.16, 1.25),
-        new THREE.MeshStandardMaterial({
-          color: 0x223545,
-          metalness: 0.82,
-          roughness: 0.25,
-        })
-      );
+      // Heavy dovetail base saddle riding the dual rails
+      const saddleMat = new THREE.MeshStandardMaterial({
+        color: 0x182430,
+        metalness: 0.88,
+        roughness: 0.22,
+      });
+      const clampBlock = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.18, 1.28), saddleMat);
       stage.add(clampBlock);
 
-      const post = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.08, 0.08, 1.4, 24),
-        new THREE.MeshStandardMaterial({
-          color: 0xa9cce3,
-          metalness: 0.95,
-          roughness: 0.1,
-        })
-      );
-      post.position.set(0, 0.95, 0);
+      // Knurled rail lock thumbscrew on the saddle side
+      const thumbMat = new THREE.MeshStandardMaterial({
+        color: 0x7b99b0,
+        metalness: 0.94,
+        roughness: 0.18,
+      });
+      const lockScrew = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.22, 16), thumbMat);
+      lockScrew.rotation.x = Math.PI / 2;
+      lockScrew.position.set(0, 0, 0.68);
+      stage.add(lockScrew);
+
+      // Ground stainless steel post holder cylinder
+      const holderMat = new THREE.MeshStandardMaterial({
+        color: 0x1f2e3d,
+        metalness: 0.86,
+        roughness: 0.28,
+      });
+      const postHolder = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.85, 24), holderMat);
+      postHolder.position.set(0, 0.48, 0);
+      stage.add(postHolder);
+
+      // Height adjustment knurled collar
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.08, 24), thumbMat);
+      collar.position.set(0, 0.88, 0);
+      stage.add(collar);
+
+      // Hardened stainless steel optical post
+      const postMat = new THREE.MeshStandardMaterial({
+        color: 0xc4d8e8,
+        metalness: 0.96,
+        roughness: 0.08,
+      });
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 1.15, 24), postMat);
+      post.position.set(0, 1.18, 0);
       stage.add(post);
 
       return stage;
     }
 
-    // 1. Emitter Apparatus (-5.8)
+    // 1. Scientific Gas/Diode Laser Head with Anodized Fins and Precision Bezel (-5.8)
     const emitterStage = createCarrierStage(-5.8);
     scene.add(emitterStage);
 
@@ -284,45 +379,76 @@ function DoubleSlitScene({
     emitterHousing.position.set(-5.8, 0.15, 0);
     scene.add(emitterHousing);
 
+    // Cylindrical laser head body (laboratory He-Ne / DPSS style)
     const laserBodyMat = new THREE.MeshPhysicalMaterial({
-      color: 0x1c2b3a,
-      metalness: 0.88,
-      roughness: 0.22,
-      clearcoat: 0.85,
-    });
-    const laserBody = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.78, 0.96), laserBodyMat);
-    laserBody.position.set(-0.25, 0, 0);
-    emitterHousing.add(laserBody);
-
-    const snoutMat = new THREE.MeshStandardMaterial({
-      color: 0x3d566e,
-      metalness: 0.92,
+      color: 0x16222f,
+      metalness: 0.9,
       roughness: 0.18,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.1,
     });
-    const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 0.65, 32), snoutMat);
+    const laserTube = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 2.2, 36), laserBodyMat);
+    laserTube.rotation.z = Math.PI / 2;
+    laserTube.position.set(-0.35, 0, 0);
+    emitterHousing.add(laserTube);
+
+    // Radiating heatsink cooling fins
+    const finMat = new THREE.MeshStandardMaterial({
+      color: 0x223648,
+      metalness: 0.85,
+      roughness: 0.3,
+    });
+    [-1.0, -0.75, -0.5, -0.25, 0.0, 0.25].forEach((fx) => {
+      const fin = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.04, 32), finMat);
+      fin.rotation.z = Math.PI / 2;
+      fin.position.set(fx, 0, 0);
+      emitterHousing.add(fin);
+    });
+
+    // Rear power cap with key-switch & BNC power connector
+    const rearCap = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.38, 0.3, 32), finMat);
+    rearCap.rotation.z = Math.PI / 2;
+    rearCap.position.set(-1.55, 0, 0);
+    emitterHousing.add(rearCap);
+
+    // Output aperture snout collar
+    const snoutMat = new THREE.MeshStandardMaterial({
+      color: 0x48647e,
+      metalness: 0.95,
+      roughness: 0.14,
+    });
+    const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.36, 0.55, 32), snoutMat);
     snout.rotation.z = -Math.PI / 2;
-    snout.position.set(1.05, 0, 0);
+    snout.position.set(0.95, 0, 0);
     emitterHousing.add(snout);
 
+    // Mechanical laser shutter ring
+    const shutterRing = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.035, 16, 32), snoutMat);
+    shutterRing.rotation.y = Math.PI / 2;
+    shutterRing.position.set(1.22, 0, 0);
+    emitterHousing.add(shutterRing);
+
+    // Internal resonant cavity glow (visible through inspection port)
     const cavityMat = new THREE.MeshBasicMaterial({
       color: 0x54e39d,
       transparent: true,
       opacity: 0.85,
     });
-    const cavityGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.2, 24), cavityMat);
+    const cavityGlow = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.4, 24), cavityMat);
     cavityGlow.rotation.z = Math.PI / 2;
-    cavityGlow.position.set(-0.25, 0, 0);
+    cavityGlow.position.set(-0.35, 0, 0);
     emitterHousing.add(cavityGlow);
 
+    // Laser aperture emitting flare
     const apertureFlareMat = new THREE.MeshBasicMaterial({
       color: 0x54e39d,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.75,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
-    const apertureFlare = new THREE.Mesh(new THREE.SphereGeometry(0.24, 20, 20), apertureFlareMat);
-    apertureFlare.position.set(1.4, 0, 0);
+    const apertureFlare = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), apertureFlareMat);
+    apertureFlare.position.set(1.25, 0, 0);
     emitterHousing.add(apertureFlare);
 
     // 2. Barrier Stage & Slits (-0.5)
@@ -382,53 +508,71 @@ function DoubleSlitScene({
       barrierGroup.add(lip);
     });
 
-    // 3. Which-Path Observer Hardware
+    // 3. Precision Which-Path Observer Measurement Sensors (Photomultiplier tubes / avalanche photodiodes)
     const observerRig = new THREE.Group();
     observerRig.position.set(-0.5, 0.15, 0);
     scene.add(observerRig);
 
-    const sensorBodyMat = new THREE.MeshStandardMaterial({
-      color: 0x24180d,
-      metalness: 0.65,
-      roughness: 0.35,
+    const sensorHousingMat = new THREE.MeshStandardMaterial({
+      color: 0x1f1610,
+      metalness: 0.85,
+      roughness: 0.28,
+    });
+    const sensorLensMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffeedd,
+      transmission: 0.9,
+      roughness: 0.05,
+      metalness: 0.1,
     });
     const sensorLedMatA = new THREE.MeshBasicMaterial({ color: 0x54e39d });
     const sensorLedMatB = new THREE.MeshBasicMaterial({ color: 0x54e39d });
 
-    const sensorHeadA = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.16), sensorBodyMat);
-    sensorHeadA.position.set(0.18, 0.68, -0.55);
-    observerRig.add(sensorHeadA);
+    // Sensor Unit A (Slit A at Z = -0.55m): Cylindrical APD detector with optical snout
+    const sensorBodyA = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.10, 0.32, 20), sensorHousingMat);
+    sensorBodyA.position.set(0.20, 0.72, -0.55);
+    observerRig.add(sensorBodyA);
 
-    const sensorLedA = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 12), sensorLedMatA);
-    sensorLedA.position.set(0.31, 0.68, -0.55);
+    const sensorLensA = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 16), sensorLensMat);
+    sensorLensA.position.set(0.20, 0.56, -0.55);
+    observerRig.add(sensorLensA);
+
+    const sensorLedA = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 16), sensorLedMatA);
+    sensorLedA.position.set(0.30, 0.75, -0.55);
     observerRig.add(sensorLedA);
 
     const probeBeamMatA = new THREE.MeshBasicMaterial({
       color: 0xffaa33,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.75,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
     });
-    const probeBeamA = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 1.2, 8), probeBeamMatA);
-    probeBeamA.position.set(0.18, 0, -0.55);
+    const probeBeamA = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.2, 12), probeBeamMatA);
+    probeBeamA.position.set(0.20, 0, -0.55);
     observerRig.add(probeBeamA);
 
-    const sensorHeadB = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.16), sensorBodyMat);
-    sensorHeadB.position.set(0.18, 0.68, 0.55);
-    observerRig.add(sensorHeadB);
+    // Sensor Unit B (Slit B at Z = +0.55m)
+    const sensorBodyB = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.10, 0.32, 20), sensorHousingMat);
+    sensorBodyB.position.set(0.20, 0.72, 0.55);
+    observerRig.add(sensorBodyB);
 
-    const sensorLedB = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 12), sensorLedMatB);
-    sensorLedB.position.set(0.31, 0.68, 0.55);
+    const sensorLensB = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 16), sensorLensMat);
+    sensorLensB.position.set(0.20, 0.56, 0.55);
+    observerRig.add(sensorLensB);
+
+    const sensorLedB = new THREE.Mesh(new THREE.SphereGeometry(0.045, 16, 16), sensorLedMatB);
+    sensorLedB.position.set(0.30, 0.75, 0.55);
     observerRig.add(sensorLedB);
 
     const probeBeamMatB = new THREE.MeshBasicMaterial({
       color: 0xffaa33,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.75,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
     });
-    const probeBeamB = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 1.2, 8), probeBeamMatB);
-    probeBeamB.position.set(0.18, 0, 0.55);
+    const probeBeamB = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.2, 12), probeBeamMatB);
+    probeBeamB.position.set(0.20, 0, 0.55);
     observerRig.add(probeBeamB);
 
     // 4. DETECTOR PHOSPHOR CANVAS SCREEN (+5.2)
@@ -509,6 +653,47 @@ function DoubleSlitScene({
     screenFace.rotation.y = -Math.PI / 2;
     screenFace.position.set(-0.01, 0, 0);
     detectorRig.add(screenFace);
+
+    
+    // --- 3D Hardware Annotations & Object Identity Callout Labels ---
+    const labelsGroup = new THREE.Group();
+    scene.add(labelsGroup);
+
+    // Emitter label
+    const labelEmitter = createLabelSprite("COHERENT LASER", "λ = 390 - 700nm Source", "#38e1ff");
+    labelEmitter.position.set(-5.8, 1.45, 0);
+    labelsGroup.add(labelEmitter);
+
+    // Optical rail bench label
+    const labelRail = createLabelSprite("OPTICAL RAIL BENCH", "Heavy Vibration-Isolated Track", "#75bdf4");
+    labelRail.position.set(-3.2, -1.2, 1.3);
+    labelsGroup.add(labelRail);
+
+    // Dual-Slit Barrier label
+    const labelSlits = createLabelSprite("DUAL-SLIT APERTURE", "d = 1.10m · a = 0.36m", "#38e1ff");
+    labelSlits.position.set(-0.5, 1.65, 0);
+    labelsGroup.add(labelSlits);
+
+    // Slit A & Slit B individual markers
+    const labelSlitA = createLabelSprite("SLIT A", "Aperture 1 (Z = -0.55m)", "#00d4ff");
+    labelSlitA.scale.set(1.4, 0.45, 1);
+    labelSlitA.position.set(-0.5, 0.95, -0.95);
+    labelsGroup.add(labelSlitA);
+
+    const labelSlitB = createLabelSprite("SLIT B", "Aperture 2 (Z = +0.55m)", "#00d4ff");
+    labelSlitB.scale.set(1.4, 0.45, 1);
+    labelSlitB.position.set(-0.5, 0.95, 0.95);
+    labelsGroup.add(labelSlitB);
+
+    // Which-Path Observer Detector label
+    const labelObserver = createLabelSprite("WHICH-PATH DETECTORS", "Decoherence Collapse Monitors", "#ffaa3b");
+    labelObserver.position.set(0.1, 1.55, 0);
+    labelsGroup.add(labelObserver);
+
+    // Phosphor Screen Detector label
+    const labelDetector = createLabelSprite("DETECTOR SCREEN", "High-Resolution Phosphor Plane", "#56e39f");
+    labelDetector.position.set(5.2, 2.35, 0);
+    labelsGroup.add(labelDetector);
 
     const recordedHits: { z: number; y: number }[] = [];
 
@@ -742,14 +927,20 @@ function DoubleSlitScene({
       const dt = Math.min((time - lastTime) / 1000, 0.05);
       lastTime = time;
 
+
       const {
         wavelength: currentWl,
         whichPath: currentWp,
         emissionRate: currentRate,
         speedMultiplier: currentSpeed,
         isRunning: currentRunning,
+        showLabels: currentLabels,
         onHit: reportHit,
       } = stateRef.current;
+
+      labelsGroup.visible = !!currentLabels;
+      labelObserver.visible = !!currentLabels && currentWp;
+
 
       const currentColor = wavelengthToColor(currentWl);
 
@@ -1161,6 +1352,7 @@ export default function DoubleSlitLab() {
   const [resetKey, setResetKey] = useState(0);
   const [activePreset, setActivePreset] = useState<"cinematic" | "barrel" | "detector" | "slits" | "overhead">("cinematic");
   const [showWaveOverlay, setShowWaveOverlay] = useState(false);
+  const [showLabels, setShowLabels] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [hitHistory, setHitHistory] = useState<{ z: number; y: number }[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -1304,108 +1496,127 @@ export default function DoubleSlitLab() {
             resetKey={resetKey}
             activePreset={activePreset}
             showWaveOverlay={showWaveOverlay}
+            showLabels={showLabels}
             onHit={handleHit}
             triggerSinglePhoton={singleShotTrigger}
           />
 
-          {/* TOP HUD DECK: Seamless Full-Width Glass Bar */}
+          {/* TOP HUD DECK: Unified Glass Control Bar */}
           <div className="viewport-top-hud">
             {/* Left: Master Quantum Observation State Switcher */}
-            <div className="hud-observer-switcher">
-              <div className="hud-mode-pill-group" role="group" aria-label="Quantum State Switcher">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (whichPath) {
-                      setWhichPath(false);
-                      handleReset();
-                    }
-                  }}
-                  className={`hud-mode-btn wave-mode ${!whichPath ? "active" : ""}`}
-                  title="No observer: photon travels in wave superposition through both slits, producing 5+ interference fringes"
-                  aria-pressed={!whichPath}
-                >
-                  <span className="hud-mode-icon">🌊</span>
-                  <div className="hud-mode-content">
-                    <span className="hud-mode-title">NO OBSERVER</span>
-                    <span className="hud-mode-status">WAVE SUPERPOSITION</span>
-                  </div>
-                  {!whichPath && <span className="hud-pulse-dot dot-cyan" />}
-                </button>
+            <div className="hud-section">
+              <div className="hud-observer-switcher">
+                <div className="hud-mode-pill-group" role="group" aria-label="Quantum State Switcher">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (whichPath) {
+                        setWhichPath(false);
+                        handleReset();
+                      }
+                    }}
+                    className={`hud-mode-btn wave-mode ${!whichPath ? "active" : ""}`}
+                    title="No observer: photon travels in wave superposition through both slits, producing 5+ interference fringes"
+                    aria-pressed={!whichPath}
+                  >
+                    <span className="hud-mode-icon">🌊</span>
+                    <div className="hud-mode-content">
+                      <span className="hud-mode-title">NO OBSERVER</span>
+                      <span className="hud-mode-status">WAVE SUPERPOSITION</span>
+                    </div>
+                    {!whichPath && <span className="hud-pulse-dot dot-cyan" />}
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!whichPath) {
-                      setWhichPath(true);
-                      handleReset();
-                    }
-                  }}
-                  className={`hud-mode-btn observer-mode ${whichPath ? "active" : ""}`}
-                  title="Observer active: detectors at slits measure which slit each photon enters, collapsing superposition into 2 classical bands"
-                  aria-pressed={whichPath}
-                >
-                  <span className="hud-mode-icon">👁️</span>
-                  <div className="hud-mode-content">
-                    <span className="hud-mode-title">OBSERVER ACTIVE</span>
-                    <span className="hud-mode-status">PARTICLE COLLAPSE</span>
-                  </div>
-                  {whichPath && <span className="hud-pulse-dot dot-amber" />}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!whichPath) {
+                        setWhichPath(true);
+                        handleReset();
+                      }
+                    }}
+                    className={`hud-mode-btn observer-mode ${whichPath ? "active" : ""}`}
+                    title="Observer active: detectors at slits measure which slit each photon enters, collapsing superposition into 2 classical bands"
+                    aria-pressed={whichPath}
+                  >
+                    <span className="hud-mode-icon">👁️</span>
+                    <div className="hud-mode-content">
+                      <span className="hud-mode-title">OBSERVER ACTIVE</span>
+                      <span className="hud-mode-status">PARTICLE COLLAPSE</span>
+                    </div>
+                    {whichPath && <span className="hud-pulse-dot dot-amber" />}
+                  </button>
+                </div>
               </div>
             </div>
+
+            <div className="hud-section-divider" />
 
             {/* Center: Camera Angles Toolbar */}
-            <div className="hud-camera-toolbar" role="toolbar" aria-label="Camera Presets">
-              <span className="hud-deck-label">CAMERA:</span>
-              <div className="hud-cam-btn-group">
-                {CAMERA_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    onClick={() => selectPreset(preset.id)}
-                    className={`hud-cam-btn ${activePreset === preset.id ? "active" : ""}`}
-                    title={preset.description}
-                  >
-                    {preset.name}
-                  </button>
-                ))}
+            <div className="hud-section hud-center-section">
+              <div className="hud-camera-toolbar" role="toolbar" aria-label="Camera Presets">
+                <span className="hud-deck-label">📷 CAMERA:</span>
+                <div className="hud-cam-btn-group">
+                  {CAMERA_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      onClick={() => selectPreset(preset.id)}
+                      className={`hud-cam-btn ${activePreset === preset.id ? "active" : ""}`}
+                      title={preset.description}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
+            <div className="hud-section-divider" />
+
             {/* Right: Viewport Utilities Dock */}
-            <div className="hud-utility-dock">
-              <button
-                onClick={toggleSound}
-                className={`hud-tool-btn ${soundEnabled ? "tool-active" : ""}`}
-                title={soundEnabled ? "Audio chimes active (Click to Mute)" : "Muted (Click to enable audio chimes)"}
-                aria-pressed={soundEnabled}
-              >
-                <span>{soundEnabled ? "🔊 SOUND ON" : "🔇 MUTED"}</span>
-              </button>
+            <div className="hud-section hud-right-section">
+              <div className="hud-utility-dock">
+                <button
+                  onClick={toggleSound}
+                  className={`hud-tool-btn ${soundEnabled ? "tool-active" : ""}`}
+                  title={soundEnabled ? "Audio chimes active (Click to Mute)" : "Muted (Click to enable audio chimes)"}
+                  aria-pressed={soundEnabled}
+                >
+                  <span>{soundEnabled ? "🔊 AUDIO" : "🔇 MUTED"}</span>
+                </button>
 
-              <button
-                onClick={() => setShowWaveOverlay((v) => !v)}
-                className={`hud-tool-btn ${showWaveOverlay ? "tool-active" : ""}`}
-                title="Overlay continuous theoretical wave fringes on phosphor detector screen"
-              >
-                <span>≋ {showWaveOverlay ? "WAVE ON" : "WAVE OFF"}</span>
-              </button>
+                <button
+                  onClick={() => setShowWaveOverlay((v) => !v)}
+                  className={`hud-tool-btn ${showWaveOverlay ? "tool-active" : ""}`}
+                  title="Overlay continuous theoretical wave fringes on phosphor detector screen"
+                >
+                  <span>≋ {showWaveOverlay ? "WAVE ON" : "WAVE"}</span>
+                </button>
+                <button
+                  onClick={() => setShowLabels((v) => !v)}
+                  className={`hud-tool-btn ${showLabels ? "tool-active" : ""}`}
+                  title="Toggle 3D object identity callouts & component labels"
+                >
+                  <span>🏷️ {showLabels ? "LABELS ON" : "LABELS"}</span>
+                </button>
 
-              <button
-                onClick={handleReset}
-                className="hud-tool-btn clear-btn"
-                title="Clear accumulated hits on detector screen"
-              >
-                <span>↺ CLEAR</span>
-              </button>
 
-              <button
-                onClick={() => setIsMaximized((m) => !m)}
-                className={`hud-tool-btn ${isMaximized ? "tool-active" : ""}`}
-                title={isMaximized ? "Exit Fullscreen Theater View (Esc)" : "Expand to Fullscreen Theater View"}
-              >
-                <span>{isMaximized ? "❐ EXIT" : "⛶ EXPAND"}</span>
-              </button>
+                <button
+                  onClick={handleReset}
+                  className="hud-tool-btn clear-btn"
+                  title="Clear accumulated hits on detector screen"
+                >
+                  <span>↺ CLEAR</span>
+                </button>
+
+                <button
+                  onClick={() => setIsMaximized((m) => !m)}
+                  className={`hud-tool-btn ${isMaximized ? "tool-active" : ""}`}
+                  title={isMaximized ? "Exit Fullscreen Theater View (Esc)" : "Expand to Fullscreen Theater View"}
+                >
+                  <span>{isMaximized ? "❐ EXIT" : "⛶ EXPAND"}</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1414,70 +1625,80 @@ export default function DoubleSlitLab() {
             <span>Left-Click Drag: Rotate Apparatus • Scroll: Zoom • Right-Click: Pan</span>
           </div>
 
-          {/* BOTTOM HUD DECK: Seamless Full-Width Glass Bar */}
+          {/* BOTTOM HUD DECK: Unified Glass Telemetry & Playback Bar */}
           <div className="viewport-bottom-hud">
             {/* Left: Live Instrument Telemetry */}
-            <div className="hud-telemetry-cluster">
-              <div className="hud-metric">
-                <span className="hud-metric-kicker">DETECTIONS</span>
-                <span className="hud-metric-val">{String(totalCount).padStart(5, "0")}</span>
-              </div>
-              <div className="hud-metric-divider" />
-              <div className="hud-metric">
-                <span className="hud-metric-kicker">WAVELENGTH</span>
-                <span className="hud-metric-val" style={{ color: currentColor.hex }}>
-                  {wavelength} nm
-                </span>
-              </div>
-              <div className="hud-metric-divider" />
-              <div className="hud-metric">
-                <span className="hud-metric-kicker">PATTERN</span>
-                <span className={`hud-metric-val ${whichPath ? "val-amber" : "val-cyan"}`}>
-                  {whichPath ? "2 CLASSICAL BANDS" : "5+ WAVE FRINGES"}
-                </span>
+            <div className="hud-section">
+              <div className="hud-telemetry-cluster">
+                <div className="hud-metric">
+                  <span className="hud-metric-kicker">DETECTIONS</span>
+                  <span className="hud-metric-val">{String(totalCount).padStart(5, "0")}</span>
+                </div>
+                <div className="hud-metric-divider" />
+                <div className="hud-metric">
+                  <span className="hud-metric-kicker">WAVELENGTH</span>
+                  <span className="hud-metric-val" style={{ color: currentColor.hex }}>
+                    {wavelength} nm
+                  </span>
+                </div>
+                <div className="hud-metric-divider" />
+                <div className="hud-metric">
+                  <span className="hud-metric-kicker">PATTERN</span>
+                  <span className={`hud-metric-val ${whichPath ? "val-amber" : "val-cyan"}`}>
+                    {whichPath ? "2 CLASSICAL BANDS" : "5+ WAVE FRINGES"}
+                  </span>
+                </div>
               </div>
             </div>
+
+            <div className="hud-section-divider" />
 
             {/* Center: Playback Stream Control */}
-            <div className="hud-playback-cluster">
-              <button
-                onClick={() => setIsRunning((r) => !r)}
-                className={`hud-stream-btn ${isRunning ? "stream-pause" : "stream-play"}`}
-                title={isRunning ? "Pause continuous photon stream" : "Resume continuous photon stream"}
-              >
-                {isRunning ? "❚❚ PAUSE STREAM" : "▶ RESUME STREAM"}
-              </button>
+            <div className="hud-section hud-center-section">
+              <div className="hud-playback-cluster">
+                <button
+                  onClick={() => setIsRunning((r) => !r)}
+                  className={`hud-stream-btn ${isRunning ? "stream-pause" : "stream-play"}`}
+                  title={isRunning ? "Pause continuous photon stream" : "Resume continuous photon stream"}
+                >
+                  {isRunning ? "❚❚ PAUSE STREAM" : "▶ RESUME STREAM"}
+                </button>
 
-              <button
-                onClick={fireSingle}
-                className="hud-single-btn"
-                title="Fire exactly one single photon in slow motion"
-              >
-                ⚡ FIRE 1 PHOTON
-              </button>
+                <button
+                  onClick={fireSingle}
+                  className="hud-single-btn"
+                  title="Fire exactly one single photon in slow motion"
+                >
+                  ⚡ FIRE 1 PHOTON
+                </button>
+              </div>
             </div>
 
+            <div className="hud-section-divider" />
+
             {/* Right: Simulation Speed Pills */}
-            <div className="hud-speed-cluster" role="radiogroup" aria-label="Simulation Speed">
-              <span className="hud-deck-label">SPEED:</span>
-              <div className="hud-speed-pills">
-                {[
-                  { value: 0.1, label: "0.1x", title: "Ultra Slow-Motion (10x slower) — Inspect single wavepacket splitting" },
-                  { value: 0.25, label: "0.25x", title: "Slow-Motion (4x slower)" },
-                  { value: 0.5, label: "0.5x", title: "Half Speed (2x slower)" },
-                  { value: 1.0, label: "1x", title: "Normal Real-Time Speed" },
-                  { value: 2.0, label: "2x", title: "Fast (2x faster)" },
-                  { value: 4.0, label: "4x", title: "Ultra Fast (4x faster) — Rapid accumulation" },
-                ].map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={() => setSpeedMultiplier(s.value)}
-                    className={`hud-speed-btn ${speedMultiplier === s.value ? "active" : ""}`}
-                    title={s.title}
-                  >
-                    {s.label}
-                  </button>
-                ))}
+            <div className="hud-section hud-right-section">
+              <div className="hud-speed-cluster" role="radiogroup" aria-label="Simulation Speed">
+                <span className="hud-deck-label">⏱ SPEED:</span>
+                <div className="hud-speed-pills">
+                  {[
+                    { value: 0.1, label: "0.1x", title: "Ultra Slow-Motion (10x slower) — Inspect single wavepacket splitting" },
+                    { value: 0.25, label: "0.25x", title: "Slow-Motion (4x slower)" },
+                    { value: 0.5, label: "0.5x", title: "Half Speed (2x slower)" },
+                    { value: 1.0, label: "1x", title: "Normal Real-Time Speed" },
+                    { value: 2.0, label: "2x", title: "Fast (2x faster)" },
+                    { value: 4.0, label: "4x", title: "Ultra Fast (4x faster) — Rapid accumulation" },
+                  ].map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => setSpeedMultiplier(s.value)}
+                      className={`hud-speed-btn ${speedMultiplier === s.value ? "active" : ""}`}
+                      title={s.title}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

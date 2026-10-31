@@ -33,35 +33,35 @@ interface CameraPreset {
 
 const CAMERA_PRESETS: CameraPreset[] = [
   {
-    name: "Perspective",
+    name: "Overview",
     id: "cinematic",
     position: new THREE.Vector3(-4.2, 2.2, 5.0),
     target: new THREE.Vector3(0.1, 0.0, 0),
     description: "45° Optical bench overview: emitter, dual-polarizer slit stage, rotatable analyzer, and detector screen",
   },
   {
-    name: "Beam Axis",
+    name: "Axis",
     id: "barrel",
     position: new THREE.Vector3(-6.8, 1.25, 0.0),
     target: new THREE.Vector3(1.2, 0.15, 0.0),
     description: "Look down the optical axis through slits and polarizing beam splitter directly to the detector",
   },
   {
-    name: "Detector",
+    name: "Screen",
     id: "detector",
     position: new THREE.Vector3(2.4, 0.35, 2.4),
     target: new THREE.Vector3(5.18, 0.1, 0),
     description: "Close-up perpendicular view of the phosphor screen and sorted interference fringes",
   },
   {
-    name: "Analyzer Stage",
+    name: "Analyzer",
     id: "analyzer",
     position: new THREE.Vector3(0.5, 0.75, 2.0),
     target: new THREE.Vector3(1.6, 0.15, 0),
     description: "Close-up of the rotating polarization analyzer and beam splitter prism",
   },
   {
-    name: "Overhead",
+    name: "Top",
     id: "overhead",
     position: new THREE.Vector3(0.0, 9.2, 0.01),
     target: new THREE.Vector3(0.0, 0.0, 0),
@@ -82,6 +82,7 @@ export default function QuantumEraserLab() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
   const [activePreset, setActivePreset] = useState<CameraPreset["id"]>("cinematic");
   const [activeView, setActiveView] = useState<"ALL" | "A" | "B" | "OVERLAY">("ALL");
+  const [showLabels, setShowLabels] = useState<boolean>(false);
   const [isMaximized, setIsMaximized] = useState<boolean>(false);
   const [singleShotTrigger, setSingleShotTrigger] = useState<number>(0);
   const [showWalkthrough, setShowWalkthrough] = useState<boolean>(false);
@@ -243,116 +244,135 @@ export default function QuantumEraserLab() {
             isRunning={isRunning}
             activePreset={activePreset}
             activeView={activeView}
+            showLabels={showLabels}
             onHit={handleHit}
             triggerSinglePhoton={singleShotTrigger}
             physicsModel={physicsModel}
             hitsRef={hitsRef}
           />
 
-          {/* TOP HUD DECK */}
+          {/* TOP HUD DECK: Unified Glass Control Bar */}
           <div className="viewport-top-hud">
-            {/* Mode Switcher */}
-            <div className="hud-observer-switcher">
-              <div className="hud-mode-pill-group" role="group" aria-label="Quantum Eraser Mode">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("plain");
-                    handleReset();
-                  }}
-                  className={`hud-mode-btn wave-mode ${mode === "plain" ? "active" : ""}`}
-                  title={STRINGS.modes.plain.description}
-                  aria-pressed={mode === "plain"}
-                >
-                  <span className="hud-mode-icon">🌊</span>
-                  <div className="hud-mode-content">
-                    <span className="hud-mode-title">{STRINGS.modes.plain.name.toUpperCase()}</span>
-                    <span className="hud-mode-status">WAVE INTERFERENCE</span>
-                  </div>
-                  {mode === "plain" && <span className="hud-pulse-dot dot-cyan" />}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("tagged");
-                    handleReset();
-                  }}
-                  className={`hud-mode-btn observer-mode ${mode === "tagged" ? "active" : ""}`}
-                  title={STRINGS.modes.tagged.description}
-                  aria-pressed={mode === "tagged"}
-                >
-                  <span className="hud-mode-icon">🏷️</span>
-                  <div className="hud-mode-content">
-                    <span className="hud-mode-title">{STRINGS.modes.tagged.name.toUpperCase()}</span>
-                    <span className="hud-mode-status">WHICH-PATH (H/V)</span>
-                  </div>
-                  {mode === "tagged" && <span className="hud-pulse-dot dot-amber" />}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode("analyzer");
-                    handleReset();
-                  }}
-                  className={`hud-mode-btn analyzer-mode ${mode === "analyzer" ? "active" : ""}`}
-                  title={STRINGS.modes.analyzer.description}
-                  aria-pressed={mode === "analyzer"}
-                >
-                  <span className="hud-mode-icon">🪞</span>
-                  <div className="hud-mode-content">
-                    <span className="hud-mode-title">{STRINGS.modes.analyzer.name.toUpperCase()}</span>
-                    <span className="hud-mode-status">POLARIZER θ = {thetaDeg}°</span>
-                  </div>
-                  {mode === "analyzer" && <span className="hud-pulse-dot dot-cyan" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Camera Presets */}
-            <div className="hud-camera-toolbar" role="toolbar" aria-label="Camera Presets">
-              <span className="hud-deck-label">CAMERA:</span>
-              <div className="hud-cam-btn-group">
-                {CAMERA_PRESETS.map((preset) => (
+            {/* Left: Mode Switcher */}
+            <div className="hud-section">
+              <div className="hud-observer-switcher">
+                <div className="hud-mode-pill-group" role="group" aria-label="Quantum Eraser Mode">
                   <button
-                    key={preset.id}
-                    onClick={() => setActivePreset(preset.id)}
-                    className={`hud-cam-btn ${activePreset === preset.id ? "active" : ""}`}
-                    title={preset.description}
+                    type="button"
+                    onClick={() => {
+                      setMode("plain");
+                      handleReset();
+                    }}
+                    className={`hud-mode-btn wave-mode ${mode === "plain" ? "active" : ""}`}
+                    title={STRINGS.modes.plain.description}
+                    aria-pressed={mode === "plain"}
                   >
-                    {preset.name}
+                    <span className="hud-mode-icon">🌊</span>
+                    <div className="hud-mode-content">
+                      <span className="hud-mode-title">PLAIN</span>
+                      <span className="hud-mode-status">WAVE INTERFERENCE</span>
+                    </div>
+                    {mode === "plain" && <span className="hud-pulse-dot dot-cyan" />}
                   </button>
-                ))}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("tagged");
+                      handleReset();
+                    }}
+                    className={`hud-mode-btn observer-mode ${mode === "tagged" ? "active" : ""}`}
+                    title={STRINGS.modes.tagged.description}
+                    aria-pressed={mode === "tagged"}
+                  >
+                    <span className="hud-mode-icon">🏷️</span>
+                    <div className="hud-mode-content">
+                      <span className="hud-mode-title">TAGGED (H/V)</span>
+                      <span className="hud-mode-status">WHICH-PATH (H/V)</span>
+                    </div>
+                    {mode === "tagged" && <span className="hud-pulse-dot dot-amber" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("analyzer");
+                      handleReset();
+                    }}
+                    className={`hud-mode-btn analyzer-mode ${mode === "analyzer" ? "active" : ""}`}
+                    title={STRINGS.modes.analyzer.description}
+                    aria-pressed={mode === "analyzer"}
+                  >
+                    <span className="hud-mode-icon">🪞</span>
+                    <div className="hud-mode-content">
+                      <span className="hud-mode-title">ANALYZER ({thetaDeg}°)</span>
+                      <span className="hud-mode-status">POLARIZER θ = {thetaDeg}°</span>
+                    </div>
+                    {mode === "analyzer" && <span className="hud-pulse-dot dot-cyan" />}
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* Utility Dock */}
-            <div className="hud-utility-dock">
-              <button
-                onClick={toggleSound}
-                className={`hud-tool-btn ${soundEnabled ? "tool-active" : ""}`}
-                title={soundEnabled ? "Audio chimes active" : "Audio muted"}
-                aria-pressed={soundEnabled}
-              >
-                <span>{soundEnabled ? "🔊 SOUND ON" : "🔇 MUTED"}</span>
-              </button>
+            <div className="hud-section-divider" />
 
-              <button
-                onClick={handleReset}
-                className="hud-tool-btn clear-btn"
-                title="Clear accumulated hits on detector screen"
-              >
-                <span>↺ CLEAR</span>
-              </button>
+            {/* Center: Camera Presets */}
+            <div className="hud-section hud-center-section">
+              <div className="hud-camera-toolbar" role="toolbar" aria-label="Camera Presets">
+                <span className="hud-deck-label">📷 CAMERA:</span>
+                <div className="hud-cam-btn-group">
+                  {CAMERA_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      onClick={() => setActivePreset(preset.id)}
+                      className={`hud-cam-btn ${activePreset === preset.id ? "active" : ""}`}
+                      title={preset.description}
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-              <button
-                onClick={() => setIsMaximized((m) => !m)}
-                className={`hud-tool-btn ${isMaximized ? "tool-active" : ""}`}
-                title={isMaximized ? "Exit theater view (Esc)" : "Expand to theater view"}
-              >
-                <span>{isMaximized ? "❐ EXIT" : "⛶ EXPAND"}</span>
-              </button>
+            <div className="hud-section-divider" />
+
+            {/* Right: Utility Dock */}
+            <div className="hud-section hud-right-section">
+              <div className="hud-utility-dock">
+                <button
+                  onClick={toggleSound}
+                  className={`hud-tool-btn ${soundEnabled ? "tool-active" : ""}`}
+                  title={soundEnabled ? "Audio chimes active" : "Audio muted"}
+                  aria-pressed={soundEnabled}
+                >
+                  <span>{soundEnabled ? "🔊 AUDIO" : "🔇 MUTED"}</span>
+                </button>
+                <button
+                  onClick={() => setShowLabels((v) => !v)}
+                  className={`hud-tool-btn ${showLabels ? "tool-active" : ""}`}
+                  title="Toggle 3D object identity callouts & component labels"
+                >
+                  <span>🏷️ {showLabels ? "LABELS ON" : "LABELS"}</span>
+                </button>
+
+
+                <button
+                  onClick={handleReset}
+                  className="hud-tool-btn clear-btn"
+                  title="Clear accumulated hits on detector screen"
+                >
+                  <span>↺ CLEAR</span>
+                </button>
+
+                <button
+                  onClick={() => setIsMaximized((m) => !m)}
+                  className={`hud-tool-btn ${isMaximized ? "tool-active" : ""}`}
+                  title={isMaximized ? "Exit theater view (Esc)" : "Expand to theater view"}
+                >
+                  <span>{isMaximized ? "❐ EXIT" : "⛶ EXPAND"}</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -361,75 +381,85 @@ export default function QuantumEraserLab() {
             <span>Left-Click Drag: Rotate Apparatus • Scroll: Zoom • Right-Click: Pan</span>
           </div>
 
-          {/* BOTTOM HUD DECK */}
+          {/* BOTTOM HUD DECK: Unified Glass Telemetry & Playback Bar */}
           <div className="viewport-bottom-hud">
             {/* Telemetry Cluster */}
-            <div className="hud-telemetry-cluster">
-              <div className="hud-metric">
-                <span className="hud-metric-kicker">ALL HITS</span>
-                <span className="hud-metric-val">{String(totalCount).padStart(5, "0")}</span>
-              </div>
-              <div className="hud-metric-divider" />
-              <div className="hud-metric">
-                <span className="hud-metric-kicker">CHANNEL A (●)</span>
-                <span className="hud-metric-val val-cyan">{String(countA).padStart(5, "0")}</span>
-              </div>
-              <div className="hud-metric-divider" />
-              <div className="hud-metric">
-                <span className="hud-metric-kicker">CHANNEL B (▲)</span>
-                <span className="hud-metric-val val-amber">{String(countB).padStart(5, "0")}</span>
-              </div>
-              <div className="hud-metric-divider" />
-              <div className="hud-metric">
-                <span className="hud-metric-kicker">VISIBILITY |sin(2θ)|</span>
-                <span className="hud-metric-val val-cyan">{(visibility * 100).toFixed(1)}%</span>
-              </div>
-              <div className="hud-metric-divider" />
-              <div className="hud-metric">
-                <span className="hud-metric-kicker">FRINGE Δx</span>
-                <span className="hud-metric-val">{fringeSpacingMm.toFixed(2)} mm</span>
+            <div className="hud-section">
+              <div className="hud-telemetry-cluster">
+                <div className="hud-metric">
+                  <span className="hud-metric-kicker">ALL HITS</span>
+                  <span className="hud-metric-val">{String(totalCount).padStart(5, "0")}</span>
+                </div>
+                <div className="hud-metric-divider" />
+                <div className="hud-metric">
+                  <span className="hud-metric-kicker">CHANNEL A (●)</span>
+                  <span className="hud-metric-val val-cyan">{String(countA).padStart(5, "0")}</span>
+                </div>
+                <div className="hud-metric-divider" />
+                <div className="hud-metric">
+                  <span className="hud-metric-kicker">CHANNEL B (▲)</span>
+                  <span className="hud-metric-val val-amber">{String(countB).padStart(5, "0")}</span>
+                </div>
+                <div className="hud-metric-divider" />
+                <div className="hud-metric">
+                  <span className="hud-metric-kicker">VISIBILITY |sin(2θ)|</span>
+                  <span className="hud-metric-val val-cyan">{(visibility * 100).toFixed(1)}%</span>
+                </div>
+                <div className="hud-metric-divider" />
+                <div className="hud-metric">
+                  <span className="hud-metric-kicker">FRINGE Δx</span>
+                  <span className="hud-metric-val">{fringeSpacingMm.toFixed(2)} mm</span>
+                </div>
               </div>
             </div>
+
+            <div className="hud-section-divider" />
 
             {/* Playback Controls */}
-            <div className="hud-playback-cluster">
-              <button
-                onClick={() => setIsRunning((r) => !r)}
-                className={`hud-stream-btn ${isRunning ? "stream-pause" : "stream-play"}`}
-                title={isRunning ? "Pause continuous photon stream" : "Resume photon stream"}
-              >
-                {isRunning ? "❚❚ PAUSE" : "▶ RESUME"}
-              </button>
+            <div className="hud-section hud-center-section">
+              <div className="hud-playback-cluster">
+                <button
+                  onClick={() => setIsRunning((r) => !r)}
+                  className={`hud-stream-btn ${isRunning ? "stream-pause" : "stream-play"}`}
+                  title={isRunning ? "Pause continuous photon stream" : "Resume photon stream"}
+                >
+                  {isRunning ? "❚❚ PAUSE" : "▶ RESUME"}
+                </button>
 
-              <button
-                onClick={() => setSingleShotTrigger((s) => s + 1)}
-                className="hud-single-btn"
-                title="Fire exactly 1 photon in slow motion"
-              >
-                ⚡ FIRE 1 PHOTON
-              </button>
+                <button
+                  onClick={() => setSingleShotTrigger((s) => s + 1)}
+                  className="hud-single-btn"
+                  title="Fire exactly 1 photon in slow motion"
+                >
+                  ⚡ FIRE 1 PHOTON
+                </button>
+              </div>
             </div>
 
+            <div className="hud-section-divider" />
+
             {/* Speed Pills */}
-            <div className="hud-speed-cluster" role="radiogroup" aria-label="Simulation Speed">
-              <span className="hud-deck-label">SPEED:</span>
-              <div className="hud-speed-pills">
-                {[
-                  { value: 0.1, label: "0.1x" },
-                  { value: 0.25, label: "0.25x" },
-                  { value: 0.5, label: "0.5x" },
-                  { value: 1.0, label: "1x" },
-                  { value: 2.0, label: "2x" },
-                  { value: 4.0, label: "4x" },
-                ].map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={() => setSpeedMultiplier(s.value)}
-                    className={`hud-speed-btn ${speedMultiplier === s.value ? "active" : ""}`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
+            <div className="hud-section hud-right-section">
+              <div className="hud-speed-cluster" role="radiogroup" aria-label="Simulation Speed">
+                <span className="hud-deck-label">⏱ SPEED:</span>
+                <div className="hud-speed-pills">
+                  {[
+                    { value: 0.1, label: "0.1x" },
+                    { value: 0.25, label: "0.25x" },
+                    { value: 0.5, label: "0.5x" },
+                    { value: 1.0, label: "1x" },
+                    { value: 2.0, label: "2x" },
+                    { value: 4.0, label: "4x" },
+                  ].map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => setSpeedMultiplier(s.value)}
+                      className={`hud-speed-btn ${speedMultiplier === s.value ? "active" : ""}`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -783,6 +813,69 @@ export default function QuantumEraserLab() {
 // Three.js 3D Apparatus Scene Component
 // ============================================================================
 
+
+function createLabelSprite(text: string, subtitle?: string, accentColor = "#a855f7"): THREE.Sprite {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 160;
+  const ctx = canvas.getContext("2d")!;
+
+  ctx.clearRect(0, 0, 512, 160);
+
+  const r = 24;
+  const x = 16;
+  const y = 16;
+  const w = 480;
+  const h = 128;
+
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+
+  ctx.fillStyle = "rgba(4, 9, 16, 0.92)";
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = accentColor;
+  ctx.stroke();
+
+  ctx.fillStyle = accentColor;
+  ctx.fillRect(x + 40, y + 6, w - 80, 4);
+
+  ctx.font = "bold 32px 'JetBrains Mono', 'Fira Code', monospace";
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 256, subtitle ? y + 48 : y + 64);
+
+  if (subtitle) {
+    ctx.font = "600 20px 'JetBrains Mono', 'Fira Code', monospace";
+    ctx.fillStyle = accentColor;
+    ctx.fillText(subtitle, 256, y + 90);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+
+  const mat = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  });
+
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.9, 0.6, 1);
+  return sprite;
+}
+
 interface SceneProps {
   mode: EraserMode;
   thetaRad: number;
@@ -794,6 +887,7 @@ interface SceneProps {
   isRunning: boolean;
   activePreset: CameraPreset["id"];
   activeView: "ALL" | "A" | "B" | "OVERLAY";
+  showLabels: boolean;
   onHit: (hit: RecordedEraserHit) => void;
   triggerSinglePhoton: number;
   physicsModel: QuantumEraserModel;
@@ -811,6 +905,7 @@ function QuantumEraserScene({
   isRunning,
   activePreset,
   activeView,
+  showLabels,
   onHit,
   triggerSinglePhoton,
   physicsModel,
@@ -827,6 +922,7 @@ function QuantumEraserScene({
     speedMultiplier,
     isRunning,
     activeView,
+    showLabels,
     onHit,
     physicsModel,
   });
@@ -842,6 +938,7 @@ function QuantumEraserScene({
       speedMultiplier,
       isRunning,
       activeView,
+      showLabels,
       onHit,
       physicsModel,
     };
@@ -855,6 +952,7 @@ function QuantumEraserScene({
     speedMultiplier,
     isRunning,
     activeView,
+    showLabels,
     onHit,
     physicsModel,
   ]);
@@ -958,28 +1056,45 @@ function QuantumEraserScene({
       benchGroup.add(rail);
     });
 
-    // Carrier Stages helper
+    // Precision Optical Carrier Stages (Thorlabs style dovetail base & stainless post)
     function createCarrierStage(xPos: number) {
       const stage = new THREE.Group();
       stage.position.set(xPos, -1.68, 0);
 
+      // Heavy dovetail base clamp
       const clampBlock = new THREE.Mesh(
-        new THREE.BoxGeometry(0.72, 0.16, 1.25),
-        new THREE.MeshStandardMaterial({ color: 0x223545, metalness: 0.82, roughness: 0.25 })
+        new THREE.BoxGeometry(0.78, 0.18, 1.28),
+        new THREE.MeshStandardMaterial({ color: 0x182430, metalness: 0.88, roughness: 0.22 })
       );
       stage.add(clampBlock);
 
-      const post = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.08, 0.08, 1.4, 24),
-        new THREE.MeshStandardMaterial({ color: 0xa9cce3, metalness: 0.95, roughness: 0.1 })
+      // Knurled thumbscrew
+      const thumbMat = new THREE.MeshStandardMaterial({ color: 0x7b99b0, metalness: 0.94, roughness: 0.18 });
+      const lockScrew = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.22, 16), thumbMat);
+      lockScrew.rotation.x = Math.PI / 2;
+      lockScrew.position.set(0, 0, 0.68);
+      stage.add(lockScrew);
+
+      // Optical post holder collar
+      const postHolder = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.14, 0.85, 24),
+        new THREE.MeshStandardMaterial({ color: 0x1f2e3d, metalness: 0.86, roughness: 0.28 })
       );
-      post.position.set(0, 0.95, 0);
+      postHolder.position.set(0, 0.48, 0);
+      stage.add(postHolder);
+
+      // Stainless steel mounting post
+      const post = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.075, 0.075, 1.15, 24),
+        new THREE.MeshStandardMaterial({ color: 0xc4d8e8, metalness: 0.96, roughness: 0.08 })
+      );
+      post.position.set(0, 1.18, 0);
       stage.add(post);
 
       return stage;
     }
 
-    // 1. Emitter (-5.8)
+    // 1. Coherent Laser Pump Head (-5.8)
     const emitterStage = createCarrierStage(-5.8);
     scene.add(emitterStage);
 
@@ -987,20 +1102,101 @@ function QuantumEraserScene({
     emitterHousing.position.set(-5.8, 0.15, 0);
     scene.add(emitterHousing);
 
-    const laserBody = new THREE.Mesh(
-      new THREE.BoxGeometry(2.1, 0.78, 0.96),
-      new THREE.MeshPhysicalMaterial({ color: 0x1c2b3a, metalness: 0.88, roughness: 0.22, clearcoat: 0.85 })
-    );
-    laserBody.position.set(-0.25, 0, 0);
-    emitterHousing.add(laserBody);
+    // Cylindrical laser head with heatsink fins
+    const laserHeadMat = new THREE.MeshPhysicalMaterial({
+      color: 0x16222f,
+      metalness: 0.9,
+      roughness: 0.18,
+      clearcoat: 0.9,
+    });
+    const laserTube = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 2.2, 36), laserHeadMat);
+    laserTube.rotation.z = Math.PI / 2;
+    laserTube.position.set(-0.35, 0, 0);
+    emitterHousing.add(laserTube);
 
+    // Heatsink fins
+    const finMat = new THREE.MeshStandardMaterial({ color: 0x223648, metalness: 0.85, roughness: 0.3 });
+    [-1.0, -0.75, -0.5, -0.25, 0.0, 0.25].forEach((fx) => {
+      const fin = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.04, 32), finMat);
+      fin.rotation.z = Math.PI / 2;
+      fin.position.set(fx, 0, 0);
+      emitterHousing.add(fin);
+    });
+
+    // Optical output snout
     const snout = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.3, 0.38, 0.65, 32),
-      new THREE.MeshStandardMaterial({ color: 0x3d566e, metalness: 0.92, roughness: 0.18 })
+      new THREE.CylinderGeometry(0.24, 0.36, 0.55, 32),
+      new THREE.MeshStandardMaterial({ color: 0x48647e, metalness: 0.95, roughness: 0.14 })
     );
     snout.rotation.z = -Math.PI / 2;
-    snout.position.set(1.05, 0, 0);
+    snout.position.set(0.95, 0, 0);
     emitterHousing.add(snout);
+
+    // SPDC Type-I BBO Nonlinear Optical Crystal Stage with Gimbal Mount (-2.6)
+    // Generates polarization-entangled photon pairs (Walborn et al. 2002)
+    const spdcStage = createCarrierStage(-2.6);
+    scene.add(spdcStage);
+
+    const spdcGroup = new THREE.Group();
+    spdcGroup.position.set(-2.6, 0.15, 0);
+    scene.add(spdcGroup);
+
+    // Precision gimbal mount ring
+    const gimbalMat = new THREE.MeshStandardMaterial({ color: 0x283b4c, metalness: 0.9, roughness: 0.2 });
+    const gimbalRing = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.05, 16, 36), gimbalMat);
+    gimbalRing.rotation.y = Math.PI / 2;
+    spdcGroup.add(gimbalRing);
+
+    // Crystal oven / holder cell
+    const cellMat = new THREE.MeshStandardMaterial({ color: 0x1d2c38, metalness: 0.85, roughness: 0.3 });
+    const cell = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.82, 0.62), cellMat);
+    spdcGroup.add(cell);
+
+    // Beta-Barium Borate (BBO) cut crystal prism with optical birefringence transmission
+    const spdcBodyMat = new THREE.MeshPhysicalMaterial({
+      color: 0x8a62cc,
+      metalness: 0.05,
+      roughness: 0.04,
+      transmission: 0.85,
+      thickness: 0.45,
+      transparent: true,
+      opacity: 0.92,
+      emissive: 0x3b126a,
+      emissiveIntensity: 0.65,
+    });
+    const spdcBody = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.68, 0.48), spdcBodyMat);
+    spdcBody.rotation.y = Math.PI / 8; // Phase-matching angle cut
+    spdcGroup.add(spdcBody);
+
+    // Phase-matching emission luminescence halo
+    const spdcHalo = new THREE.Mesh(
+      new THREE.TorusGeometry(0.48, 0.025, 8, 36),
+      new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.65 })
+    );
+    spdcHalo.rotation.y = Math.PI / 2;
+    spdcGroup.add(spdcHalo);
+
+    // UV pump beam: laser -> SPDC crystal
+    const pumpTubeMat = new THREE.MeshBasicMaterial({
+      color: 0x6600ff,
+      transparent: true, opacity: 0.15,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const pumpTube = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 2.82, 10), pumpTubeMat);
+    pumpTube.rotation.z = Math.PI / 2;
+    pumpTube.position.set(-4.21, 0.15, 0);
+    scene.add(pumpTube);
+
+    // Signal photon beam: SPDC crystal -> slit barrier (bright teal)
+    const sigTubeMat = new THREE.MeshBasicMaterial({
+      color: 0x00ffaa,
+      transparent: true, opacity: 0.12,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const sigTube = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 1.44, 10), sigTubeMat);
+    sigTube.rotation.z = Math.PI / 2;
+    sigTube.position.set(-1.88, 0.15, 0);
+    scene.add(sigTube);
 
     // 2. Dual-Slit Barrier Stage (-1.2) with Polarization Taggers
     const slitStage = createCarrierStage(-1.2);
@@ -1024,19 +1220,50 @@ function QuantumEraserScene({
     centerDivider.position.set(0, 0, 0);
     barrierGroup.add(centerDivider);
 
-    // Slit 1 (H Polarizer) indicator badge
-    const tagHMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.85 });
-    const tagHMesh = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.55, 0.28), tagHMat);
-    tagHMesh.position.set(0, 0, -0.55);
+    // Quarter-Wave Plate (QWP) at Slit 1: converts to H linear polarization
+    const tagHMat = new THREE.MeshPhysicalMaterial({
+      color: 0x00d4ff, metalness: 0.0, roughness: 0.04,
+      transmission: 0.6, thickness: 0.04, transparent: true, opacity: 0.75,
+      emissive: 0x004466, emissiveIntensity: 0.55,
+    });
+    const tagHMesh = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.65, 0.32), tagHMat);
+    tagHMesh.position.set(0.02, 0, -0.55);
     barrierGroup.add(tagHMesh);
 
-    // Slit 2 (V Polarizer) indicator badge
-    const tagVMat = new THREE.MeshBasicMaterial({ color: 0xffaa3b, transparent: true, opacity: 0.85 });
-    const tagVMesh = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.55, 0.28), tagVMat);
-    tagVMesh.position.set(0, 0, 0.55);
+    // Horizontal polarization grating lines on QWP-1
+    const hLineMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.85 });
+    for (let ly = -0.24; ly <= 0.24; ly += 0.10) {
+      const geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0.07, ly, -0.70),
+        new THREE.Vector3(0.07, ly, -0.40),
+      ]);
+      barrierGroup.add(new THREE.Line(geo, hLineMat));
+    }
+
+    // Quarter-Wave Plate (QWP) at Slit 2: converts to V linear polarization
+    const tagVMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffaa3b, metalness: 0.0, roughness: 0.04,
+      transmission: 0.6, thickness: 0.04, transparent: true, opacity: 0.75,
+      emissive: 0x442200, emissiveIntensity: 0.55,
+    });
+    const tagVMesh = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.65, 0.32), tagVMat);
+    tagVMesh.position.set(0.02, 0, 0.55);
     barrierGroup.add(tagVMesh);
 
-    // 3. Polarization Analyzer Stage (+1.8)
+    // Vertical polarization grating lines on QWP-2
+    const vLineMat = new THREE.LineBasicMaterial({ color: 0xffcc44, transparent: true, opacity: 0.85 });
+    for (let lz = 0.40; lz <= 0.70; lz += 0.07) {
+      const geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0.07, -0.30, lz),
+        new THREE.Vector3(0.07,  0.30, lz),
+      ]);
+      barrierGroup.add(new THREE.Line(geo, vLineMat));
+    }
+
+    // 3. Polarizing Beam Splitter (PBS) — the quantum eraser analyzer
+    // The PBS cube is the key optical element. It's oriented at angle θ from horizontal.
+    // Channel A (transmitted) continues along the main beam axis to the phosphor screen.
+    // Channel B (reflected at 90°) exits perpendicular and hits a secondary detector.
     const analyzerStage = createCarrierStage(1.8);
     scene.add(analyzerStage);
 
@@ -1044,30 +1271,74 @@ function QuantumEraserScene({
     analyzerGroup.position.set(1.8, 0.15, 0);
     scene.add(analyzerGroup);
 
-    // Rotatable circular bezel
+    // Rotatable mount ring — rotates with θ to show orientation
     const ringMat = new THREE.MeshStandardMaterial({ color: 0x3d5a77, metalness: 0.92, roughness: 0.18 });
     const bezelMesh = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.08, 16, 48), ringMat);
     bezelMesh.rotation.y = Math.PI / 2;
     analyzerGroup.add(bezelMesh);
 
-    // Optical crystal prism / beam splitter
-    const crystalMat = new THREE.MeshPhysicalMaterial({
-      color: 0xdcf3ff,
-      metalness: 0.1,
-      roughness: 0.05,
-      transmission: 0.9,
-      thickness: 0.5,
-      transparent: true,
-      opacity: 0.85,
+    // PBS glass cube body
+    const pbsMat = new THREE.MeshPhysicalMaterial({
+      color: 0xdcf3ff, metalness: 0.0, roughness: 0.04,
+      transmission: 0.87, thickness: 0.65, transparent: true, opacity: 0.82,
     });
-    const prismMesh = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.95, 0.95), crystalMat);
+    const prismMesh = new THREE.Mesh(new THREE.BoxGeometry(0.52, 1.05, 1.05), pbsMat);
     analyzerGroup.add(prismMesh);
 
-    // Pointer needle indicating rotation angle theta
+    // Diagonal 45° beam-splitter thin film inside PBS
+    const bsFilmMat = new THREE.MeshBasicMaterial({
+      color: 0x88ccff, transparent: true, opacity: 0.28,
+      side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const bsFilm = new THREE.Mesh(new THREE.PlaneGeometry(1.48, 1.5), bsFilmMat);
+    bsFilm.rotation.z = Math.PI / 4;
+    analyzerGroup.add(bsFilm);
+
+    // Polarization angle indicator needle (rotates with the whole PBS mount)
     const needleMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff });
-    const needleMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.68, 16), needleMat);
-    needleMesh.position.set(0.24, 0, 0);
+    const needleMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.72, 16), needleMat);
+    needleMesh.position.set(0.30, 0.36, 0);
     analyzerGroup.add(needleMesh);
+
+    // Channel A transmitted output beam (straight to main detector screen)
+    const chanAMat = new THREE.MeshBasicMaterial({
+      color: 0x00d4ff, transparent: true, opacity: 0.10,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const chanAArm = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 3.38, 10), chanAMat);
+    chanAArm.rotation.z = Math.PI / 2;
+    chanAArm.position.set(3.49, 0.15, 0);
+    scene.add(chanAArm);
+
+    // Channel B reflected output beam (perpendicular, exits toward z+)
+    const chanBMat = new THREE.MeshBasicMaterial({
+      color: 0xff8800, transparent: true, opacity: 0.10,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const chanBArm = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 1.55, 10), chanBMat);
+    chanBArm.rotation.x = Math.PI / 2;
+    chanBArm.position.set(1.8, 0.15, 1.28);
+    scene.add(chanBArm);
+
+    // Channel B secondary detector housing
+    const detBBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.34, 0.62, 0.26),
+      new THREE.MeshStandardMaterial({
+        color: 0x2a1a0a, metalness: 0.85, roughness: 0.3,
+        emissive: 0xff4400, emissiveIntensity: 0.07,
+      })
+    );
+    detBBody.position.set(1.8, 0.15, 2.12);
+    scene.add(detBBody);
+
+    // Channel B detector face glow plate
+    const detBFace = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.55, 0.55),
+      new THREE.MeshBasicMaterial({ color: 0xff8800, transparent: true, opacity: 0.42 })
+    );
+    detBFace.rotation.x = -Math.PI / 2;
+    detBFace.position.set(1.8, 0.47, 2.12);
+    scene.add(detBFace);
 
     // 4. Phosphor Detector Screen (+5.18)
     const detectorStage = createCarrierStage(5.18);
@@ -1097,6 +1368,52 @@ function QuantumEraserScene({
     phosphorScreen.rotation.y = -Math.PI / 2;
     phosphorScreen.position.set(5.17, 0.15, 0);
     scene.add(phosphorScreen);
+
+    
+    // --- 3D Hardware Object Annotations & Identity Callout Labels ---
+    const labelsGroup = new THREE.Group();
+    scene.add(labelsGroup);
+
+    // Laser pump
+    const labelPump = createLabelSprite("PUMP LASER", "Coherent UV Source", "#6600ff");
+    labelPump.position.set(-5.8, 1.45, 0);
+    labelsGroup.add(labelPump);
+
+    // SPDC Crystal
+    const labelSpdc = createLabelSprite("SPDC BBO CRYSTAL", "Type-I Entangled Pair Generator", "#a855f7");
+    labelSpdc.position.set(-2.6, 1.45, 0);
+    labelsGroup.add(labelSpdc);
+
+    // Dual-Slit Barrier
+    const labelSlits = createLabelSprite("DUAL SLITS & QWP", "d = 0.20mm · Orthogonal H/V Tags", "#00d4ff");
+    labelSlits.position.set(-1.2, 1.75, 0);
+    labelsGroup.add(labelSlits);
+
+    // Individual Slit 1 / Slit 2 markers
+    const labelSlitH = createLabelSprite("SLIT 1 (H)", "Horizontal Linear QWP Tag", "#00d4ff");
+    labelSlitH.scale.set(1.4, 0.45, 1);
+    labelSlitH.position.set(-1.2, 0.95, -0.95);
+    labelsGroup.add(labelSlitH);
+
+    const labelSlitV = createLabelSprite("SLIT 2 (V)", "Vertical Linear QWP Tag", "#ffaa3b");
+    labelSlitV.scale.set(1.4, 0.45, 1);
+    labelSlitV.position.set(-1.2, 0.95, 0.95);
+    labelsGroup.add(labelSlitV);
+
+    // Analyzer PBS Cube
+    const labelPbs = createLabelSprite("POLARIZING BEAM SPLITTER", "Rotatable Analyzer Angle θ", "#00d4ff");
+    labelPbs.position.set(1.8, 1.65, 0);
+    labelsGroup.add(labelPbs);
+
+    // Channel B Secondary Detector
+    const labelDetB = createLabelSprite("CHANNEL B DETECTOR", "Reflected Orthogonal Subset (▲)", "#ff8800");
+    labelDetB.position.set(1.8, 1.35, 2.3);
+    labelsGroup.add(labelDetB);
+
+    // Channel A Main Detector
+    const labelDetA = createLabelSprite("CHANNEL A DETECTOR SCREEN", "Transmitted Fringe Sub-Ensemble (●)", "#00d4ff");
+    labelDetA.position.set(5.18, 2.15, 0);
+    labelsGroup.add(labelDetA);
 
     // --- InstancedMesh for Flying Photons ---
     // Single draw call for all flying particles (up to maxParticles)
@@ -1282,6 +1599,7 @@ function QuantumEraserScene({
 
       if (!isTabVisible) return;
 
+
       const {
         mode: curMode,
         thetaRad: curTheta,
@@ -1289,9 +1607,17 @@ function QuantumEraserScene({
         speedMultiplier: curSpeed,
         isRunning: curRunning,
         activeView: curView,
+        showLabels: curLabels,
         onHit: reportHit,
         wavelengthNm: curWl,
       } = stateRef.current;
+
+      labelsGroup.visible = !!curLabels;
+      labelPbs.visible = !!curLabels && curMode === "analyzer";
+      labelDetB.visible = !!curLabels && curMode === "analyzer";
+      labelSlitH.visible = !!curLabels && curMode !== "plain";
+      labelSlitV.visible = !!curLabels && curMode !== "plain";
+
 
       const col = wavelengthToColor(curWl);
 
@@ -1303,9 +1629,12 @@ function QuantumEraserScene({
         spherical.setFromVector3(camera.position.clone().sub(currentLookAt.current));
       }
 
-      // Rotate analyzer needle according to theta
+      // Rotate the entire PBS mount (bezel, cube, film, needle) around beam (x) axis
+      // This accurately represents rotating the PBS polarization axis by angle θ
+      bezelMesh.rotation.x = curTheta;
+      prismMesh.rotation.x = curTheta;
+      bsFilm.rotation.z = Math.PI / 4; // film stays at 45° relative to cube face
       needleMesh.rotation.x = curTheta;
-      prismMesh.rotation.x = curTheta * 0.5;
 
       // Slit taggers visual state
       const isTagged = curMode !== "plain";

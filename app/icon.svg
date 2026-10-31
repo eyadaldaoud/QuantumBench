@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <!-- Background Gradient: Deep Quantum Void -->
+    <radialGradient id="quantumVoid" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a1826" />
+      <stop offset="100%" stop-color="#03070d" />
+    </radialGradient>
+
+    <!-- Neon Cyan & Amber Quantum Wave Gradient -->
+    <linearGradient id="psiGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38e1ff" />
+      <stop offset="50%" stop-color="#00d4ff" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+
+    <linearGradient id="ringGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38e1ff" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#ffaa3b" stop-opacity="0.8" />
+    </linearGradient>
+
+    <!-- Core Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Circular Outer Hex/Pill Container -->
+  <rect width="64" height="64" rx="14" fill="url(#quantumVoid)" stroke="#223850" stroke-width="1.5" />
+
+  <!-- Dual-Slit Aperture Silhouette in Background (Subtle) -->
+  <rect x="23" y="10" width="3" height="44" rx="1.5" fill="#38e1ff" opacity="0.15" />
+  <rect x="38" y="10" width="3" height="44" rx="1.5" fill="#38e1ff" opacity="0.15" />
+
+  <!-- Quantum Orbital Ring -->
+  <ellipse cx="32" cy="32" rx="24" ry="9" fill="none" stroke="url(#ringGlow)" stroke-width="1.5" stroke-dasharray="3 2" transform="rotate(-25 32 32)" opacity="0.75" />
+
+  <!-- The Wavefunction Symbol: Greek Letter Psi (Ψ) -->
+  <!-- Outer U-cup -->
+  <path d="M 18 20 C 18 36, 22 42, 32 42 C 42 42, 46 36, 46 20" 
+        fill="none" 
+        stroke="url(#psiGlow)" 
+        stroke-width="3.6" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        filter="url(#glow)" />
+
+  <!-- Central Vertical Shaft -->
+  <line x1="32" y1="12" x2="32" y2="52" 
+        stroke="url(#psiGlow)" 
+        stroke-width="3.6" 
+        stroke-linecap="round" 
+        filter="url(#glow)" />
+
+  <!-- Base Horizontal Plinth -->
+  <line x1="24" y1="52" x2="40" y2="52" 
+        stroke="#38e1ff" 
+        stroke-width="3" 
+        stroke-linecap="round" />
+
+  <!-- Center Quantum Particle Core (Photon / State Collapse Node) -->
+  <circle cx="32" cy="32" r="3" fill="#ffffff" filter="url(#glow)" />
+  <circle cx="32" cy="32" r="1.5" fill="#38e1ff" />
+</svg>

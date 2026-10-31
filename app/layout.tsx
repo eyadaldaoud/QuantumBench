@@ -23,6 +23,14 @@ export const metadata: Metadata = {
   title: "QuantaLab — Virtual 3D Quantum & Modern Physics Laboratory",
   description:
     "An open-source, interactive 3D simulation platform for exploring quantum mechanics, wave-particle duality, space quantization, and modern physics directly in your browser.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icon.svg",
+  },
   keywords: [
     "Quantum Physics",
     "Double-Slit Experiment",
