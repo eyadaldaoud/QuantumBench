@@ -1,5 +1,4 @@
-# QuantaLab (QuantumBench)
-<div align="center">
+
 
 # ⚛️ QuantaLab
 ### Virtual 3D Quantum & Modern Physics Laboratory
