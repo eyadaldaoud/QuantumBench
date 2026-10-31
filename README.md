@@ -1,18 +1,20 @@
-
+<div align="center">
 
 # ⚛️ QuantaLab
 ### Virtual 3D Quantum & Modern Physics Laboratory
+
+[![GitHub](https://img.shields.io/badge/GitHub-QuantaLab-181717?style=for-the-badge&logo=github)](https://github.com/eyadaldaoud/QuantaLab)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.4.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.3.0-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
 [![Three.js](https://img.shields.io/badge/Three.js-0.186-black?style=for-the-badge&logo=three.js)](https://threejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 An open-source, interactive 3D laboratory platform designed for students, educators, and researchers to visualize, manipulate, and explore foundational quantum mechanical and modern physics phenomena directly in the browser.
 
-[**Explore Experiments Hub**](https://thequantumbench.vercel.app/) • [**Double-Slit Lab**](https://thequantumbench.vercel.app/experiments/double-slit) • [**Quantum Eraser Lab**](https://thequantumbench.vercel.app/experiments/quantum-eraser) • [**Developer Guide**](https://github.com/eyadaldaoud/QuantumBench/blob/master/docs/ADDING_AN_EXPERIMENT.md)
+[**🔬 Explore Experiments Hub**](https://thequantumbench.vercel.app/) &nbsp;•&nbsp; [**Double-Slit Lab**](https://thequantumbench.vercel.app/experiments/double-slit) &nbsp;•&nbsp; [**Quantum Eraser Lab**](https://thequantumbench.vercel.app/experiments/quantum-eraser) &nbsp;•&nbsp; [**Developer Guide**](https://github.com/eyadaldaoud/QuantaLab/blob/master/docs/ADDING_AN_EXPERIMENT.md)
 
 </div>
 
@@ -115,7 +117,7 @@ $$p_A(x) + p_B(x) = g(x) = \operatorname{sinc}^2\left(\frac{\pi a x}{\lambda L}\
 ## 🛠️ Architecture
 
 ```
-QuantumBench/
+QuantaLab/
 ├── app/
 │   ├── layout.tsx                               # Global layout, viewport & quantum icon metadata
 │   ├── page.tsx                                 # QuantaLab platform catalog hub
@@ -152,8 +154,8 @@ QuantumBench/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/eyadaldaoud/QuantumBench.git
-   cd QuantumBench
+   git clone https://github.com/eyadaldaoud/QuantaLab.git
+   cd QuantaLab
    ```
 
 2. Install dependencies:
